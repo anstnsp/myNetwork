@@ -1,0 +1,222 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+networks:
+  nice:
+
+services:
+
+  rca.orgorderer.com:
+    container_name: rca.orgorderer.com
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca/crypto
+      #CSR 설정 
+      - FABRIC_CA_SERVER_CSR_CN=rca.orgorderer.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=rca.orgorderer.com
+      - FABRIC_CA_SERVER_DEBUG=true
+      - FABRIC_CA_SERVER_CA_NAME=rca-orderer
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+      #인증서 기간 (10년)
+      - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h 
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600h
+    ports:
+      - 7054:7054
+    command: /bin/bash -c '/scripts/start-root-ca.sh '
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - /var/hyperledger/production/ca/ca-orderer-server:/etc/hyperledger/fabric-ca/crypto
+    networks:
+      - nice
+
+  rca.orgnaver.com:
+    container_name: rca.orgnaver.com
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca/crypto
+      #CSR 설정 
+      - FABRIC_CA_SERVER_CSR_CN=rca.orgnaver.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=rca.orgnaver.com
+      # - FABRIC_CA_SERVER_CSR_NAMES
+      - FABRIC_CA_SERVER_DEBUG=true
+      - FABRIC_CA_SERVER_CA_NAME=rca-naver
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+      #인증서 기간 (10년)
+      - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h 
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600h
+
+    ports:
+      - 17054:7054
+    command: /bin/bash -c '/scripts/start-root-ca.sh '
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - /var/hyperledger/production/ca/ca-naver-server:/etc/hyperledger/fabric-ca/crypto
+    networks:
+      - nice
+
+  rca.orgkakao.com:
+    container_name: rca.orgkakao.com
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca/crypto
+      #CSR 설정 (Certificate Signing Request) 
+      - FABRIC_CA_SERVER_CSR_CN=rca.orgkakao.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=rca.orgkakao.com
+      # - FABRIC_CA_SERVER_CSR_NAMES
+      #fabric-ca-server-config.yaml 설정 
+      - FABRIC_CA_SERVER_DEBUG=true
+      - FABRIC_CA_SERVER_CA_NAME=rca-kakao
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+      #인증서 기간 (10년)
+      # - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h 
+      # - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
+      # - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600
+    ports:
+      - 27054:7054
+    command: /bin/bash -c '/scripts/start-root-ca.sh '
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - /var/hyperledger/production/ca/ca-kakao-server:/etc/hyperledger/fabric-ca/crypto
+    networks:
+      - nice
+
+  orderer0.orgorderer.com:
+    container_name: orderer0.orgorderer.com
+    image: hyperledger/fabric-orderer:1.4.1
+    environment:
+      - FABRIC_LOGGING_SPEC=DEBUG
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=ordererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/orderer/tls/ca.crt]
+      # kafka
+      - ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR=1
+      - ORDERER_KAFKA_VERBOSE=true
+
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
+    ports:
+      - 7050:7050
+    networks:
+      - nice
+    depends_on:
+      - setup
+
+  peer0.orgnaver.com:
+    container_name: peer0.orgnaver.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orgnaver.com
+      - CORE_PEER_ADDRESS=peer0.orgnaver.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orgnaver.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.orgnaver.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgnaver.com:7051
+      - CORE_PEER_LOCALMSPID=naverMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.orgnaver.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orgnaver.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/naverOrganization/orgnaver/peers/peer0/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/naverOrganization/orgnaver/peers/peer0/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - "7051:7051"
+      - "7052:7052"
+    depends_on:
+      - setup
+
+  peer1.orgnaver.com:
+    container_name: peer1.orgnaver.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.orgnaver.com
+      - CORE_PEER_ADDRESS=peer1.orgnaver.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.orgnaver.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgnaver.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.orgnaver.com:7051
+      - CORE_PEER_LOCALMSPID=naverMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer1.orgnaver.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orgnaver.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/naverOrganization/orgnaver/peers/peer1/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/naverOrganization/orgnaver/peers/peer1/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - "8051:7051"
+      - "8052:7052"
+    depends_on:
+      - setup
+
+
+  setup:
+    container_name: setup
+    image: hyperledger/fabric-ca-tools
+    environment:
+      - ORDERER_HOME=/etc/hyperledger/orderer
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/setup-fabric.sh; sleep 99999'
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - ../channel-artifacts:/channel-artifacts
+    networks:
+      - nice
+
+
+  
+
+
+
+
+
+
+
+
+    
