@@ -94,7 +94,7 @@ services:
 
   orderer0.orgorderer.com:
     container_name: orderer0.orgorderer.com
-    image: hyperledger/fabric-orderer:1.4.1
+    image: hyperledger/fabric-orderer
     environment:
       - FABRIC_LOGGING_SPEC=DEBUG
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -121,8 +121,7 @@ services:
       - 7050:7050
     networks:
       - nice
-    depends_on:
-      - setup
+
 
   peer0.orgnaver.com:
     container_name: peer0.orgnaver.com
@@ -150,14 +149,13 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-        - /var/run/:/host/var/run/
+      #  - /var/run/:/host/var/run/
         - ../crypto-config/naverOrganization/orgnaver/peers/peer0/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/naverOrganization/orgnaver/peers/peer0/tls:/etc/hyperledger/fabric/tls
     ports:
       - "7051:7051"
       - "7052:7052"
-    depends_on:
-      - setup
+
 
   peer1.orgnaver.com:
     container_name: peer1.orgnaver.com
@@ -185,15 +183,110 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-        - /var/run/:/host/var/run/
+       # - /var/run/:/host/var/run/
         - ../crypto-config/naverOrganization/orgnaver/peers/peer1/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/naverOrganization/orgnaver/peers/peer1/tls:/etc/hyperledger/fabric/tls
     ports:
       - "8051:7051"
       - "8052:7052"
-    depends_on:
-      - setup
 
+
+
+  peer0.orgkakao.com:
+    container_name: peer0.orgkakao.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orgkakao.com
+      - CORE_PEER_ADDRESS=peer0.orgkakao.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orgkakao.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.orgkakao.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgkakao.com:7051
+      - CORE_PEER_LOCALMSPID=kakaoMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.orgkakao.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orgnaver.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+       # - /var/run/:/host/var/run/
+        - ../crypto-config/kakaoOrganization/orgkakao/peers/peer0/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/kakaoOrganization/orgkakao/peers/peer0/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - "9051:7051"
+      - "9052:7052"
+
+
+  peer1.orgkakao.com:
+    container_name: peer1.orgkakao.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.orgkakao.com
+      - CORE_PEER_ADDRESS=peer1.orgkakao.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.orgkakao.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgkakao.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.orgkakao.com:7051
+      - CORE_PEER_LOCALMSPID=kakaoMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer1.orgkakao.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orgnaver.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+       # - /var/run/:/host/var/run/
+        - ../crypto-config/kakaoOrganization/orgkakao/peers/peer1/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/kakaoOrganization/orgkakao/peers/peer1/tls:/etc/hyperledger/fabric/tls
+    ports:
+      - "10051:7051"
+      - "10052:7052"
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:latest
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.orgnaver.com:7051
+      - CORE_PEER_LOCALMSPID=naverMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/crypto-config/naverOrganization/orgnaver/admin/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../chaincode/:/chaincode
+        - ../crypto-config:/crypto-config
+        - ../scripts:/scripts
+        - ../channel-artifacts:/channel-artifacts
+    networks:
+      - nice 
 
   setup:
     container_name: setup

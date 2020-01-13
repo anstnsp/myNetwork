@@ -25,7 +25,6 @@ NUM_PEERS=2
 #
 # The remainder of this file contains variables which typically would not be changed.
 #
-
 # All org names
 ORGS="$ORDERER_ORGS $PEER_ORGS"
 
@@ -46,6 +45,24 @@ CHANNEL_NAME=mychannel
 
 # Name of system channel 
 SYSTEM_CHANNEL_NAME=syschannel 
+
+#go버전 최신 체인코드 
+CC_SRC_PATH=chaincode/fabcar/
+# 체인코드 언어(GO)
+CC_LANGUAGE=golang
+# Orderer tls 인증서 경로
+ORDERER_CA=/crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp/tlscacerts/rca-orgorderer-com-7054.pem
+
+CC_NAME=hcc-cc-many
+# 체인코드버젼
+CC_VERSION=16.0
+# sleep 함수 시간 설정
+SLEEP_TIME=0.2
+# ORDERER 엔드포인트
+ORDERER_ENDPOINT=orderer0.orgorderer.com:7050
+# PEER 인증서 공통 경로
+PEER_CERT_FILE_COMMON_DIR=/crypto-config
+
 
 # initOrgVars <ORG>
 function initOrgVars {
@@ -239,6 +256,3 @@ function switchToAdminIdentity {
    fi
    export CORE_PEER_MSPCONFIGPATH=$ORG_ADMIN_HOME/msp
 }
-# ORG_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/${ORG}_admin_cert.pem
-  #ORG_ADMIN_CERT=/scripts/admincerts/${ORG}_admin_cert.pem
-  #  ORG_MSP_DIR=/crypto-config/${ORG}Organizations/org${ORG}/msp
