@@ -26,6 +26,7 @@ function printHelp() {
   echo "    -> '-start : Bring up the network with docker-compose up and set all blockchain system'"
   echo "    -> '-up' : Bring up the network with docker-compose up"
   echo "    -> '-down' : Clear the network with docker-compose down"
+  echo "     -> '-remove' : Remove artifacts and crypto-material with docker-compose down"
   echo "    -> '-generate' : Generate required certificates and genesis block"
   echo "    -> '-channel' : Create channel in blockchain system"
   echo "    -> '-join' : Join all peers in channel"
@@ -40,6 +41,7 @@ function printHelp() {
   echo "     hcc-dev.sh -generate"
   echo "     hcc-dev.sh -up"
   echo "     hcc-dev.sh -down"
+  echo "     hcc-dev.sh -remove"
   echo "     hcc-dev.sh -channel"
   echo "     hcc-dev.sh -join"
   echo "     hcc-dev.sh -anchor"
@@ -129,7 +131,29 @@ function networkDown() {
 #  rm -rf ./channel-artifacts ./crypto-config
 }
 
+# 도커관련 제거 및 인증서,아티팩트 삭제 
+function removeVolume() {
+    set -x
+  if [ -d "crypto-config" ]; then 
+    sudo rm -r crypto-config
+  fi 
+  if [ -d "/var/hyperledger" ]; then 
+    sudo rm -r /var/hyperledger
+  fi 
+  if [ -d "channel-artifacts" ]; then 
+    sudo rm -r channel-artifacts
+  fi 
+  set +x 
+  res=$? 
+  echo $res 
+    docker network prune 
+    docker system prune 
+    docker volume prune 
 
+
+
+
+}
 # 채널생성
 function createChannel() {
   docker exec cli /scripts/script.sh "create-channel"
@@ -169,6 +193,9 @@ if [ "$1" == "-start" ]; then
 elif [ "$1" == "-up" ]; then
   networkUp
 elif [ "$1" == "-down" ]; then ## Clear the network
+  networkDown
+elif [ "$1" == "-remove" ]; then 
+  removeVolume
   networkDown
 elif [ "$1" == "-z" ]; then 
   zookeeperUp

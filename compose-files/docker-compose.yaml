@@ -55,7 +55,7 @@ services:
       - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600h
 
     ports:
-      - 17054:7054
+      - 17054:7054   
     command: /bin/bash -c '/scripts/start-root-ca.sh '
     volumes:
       - ../scripts:/scripts
@@ -101,7 +101,7 @@ services:
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/orderer/orderer.genesis.block
       - ORDERER_GENERAL_LOCALMSPID=ordererMSP
-      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/msp
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/admin/msp
       # enabled TLS
       - ORDERER_GENERAL_TLS_ENABLED=true
       - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/orderer/tls/server.key
@@ -115,6 +115,7 @@ services:
     command: orderer
     volumes:
     - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
     - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
     - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
     ports:
@@ -149,7 +150,7 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-      #  - /var/run/:/host/var/run/
+        - /var/run/:/host/var/run/
         - ../crypto-config/naverOrganization/orgnaver/peers/peer0/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/naverOrganization/orgnaver/peers/peer0/tls:/etc/hyperledger/fabric/tls
     ports:
@@ -183,7 +184,7 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-       # - /var/run/:/host/var/run/
+        - /var/run/:/host/var/run/
         - ../crypto-config/naverOrganization/orgnaver/peers/peer1/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/naverOrganization/orgnaver/peers/peer1/tls:/etc/hyperledger/fabric/tls
     ports:
@@ -218,7 +219,7 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-       # - /var/run/:/host/var/run/
+        - /var/run/:/host/var/run/
         - ../crypto-config/kakaoOrganization/orgkakao/peers/peer0/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/kakaoOrganization/orgkakao/peers/peer0/tls:/etc/hyperledger/fabric/tls
     ports:
@@ -252,7 +253,7 @@ services:
     # depends_on:
     #   - couchdb0.orghcc.com
     volumes:
-       # - /var/run/:/host/var/run/
+        - /var/run/:/host/var/run/
         - ../crypto-config/kakaoOrganization/orgkakao/peers/peer1/msp:/etc/hyperledger/fabric/msp 
         - ../crypto-config/kakaoOrganization/orgkakao/peers/peer1/tls:/etc/hyperledger/fabric/tls
     ports:
@@ -265,7 +266,7 @@ services:
     tty: true
     stdin_open: true
     environment:
-      - GOPATH=/opt/gopath
+      - GOPATH=/
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       #- FABRIC_LOGGING_SPEC=DEBUG
       - FABRIC_LOGGING_SPEC=INFO
@@ -277,11 +278,12 @@ services:
       - CORE_PEER_TLS_KEY_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/server.key
       - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/ca.crt
       - CORE_PEER_MSPCONFIGPATH=/crypto-config/naverOrganization/orgnaver/admin/msp
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    # working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    working_dir: /channel-artifacts
     command: /bin/bash
     volumes:
         - /var/run/:/host/var/run/
-        - ../chaincode/:/chaincode
+        - ../chaincode/:/src/chaincode
         - ../crypto-config:/crypto-config
         - ../scripts:/scripts
         - ../channel-artifacts:/channel-artifacts

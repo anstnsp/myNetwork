@@ -47,7 +47,7 @@ CHANNEL_NAME=mychannel
 SYSTEM_CHANNEL_NAME=syschannel 
 
 #go버전 최신 체인코드 
-CC_SRC_PATH=chaincode/fabcar/
+CC_SRC_PATH=chaincode/fabcar/go
 # 체인코드 언어(GO)
 CC_LANGUAGE=golang
 # Orderer tls 인증서 경로

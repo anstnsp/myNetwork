@@ -32,7 +32,7 @@ function enrollCAAdmin {
    export FABRIC_CA_CLIENT_HOME=$HOME/cas/$CA_NAME  #/etc/hyperledger/fabric-ca/crypto/cas/rca-orderer , /etc/hyperledger/fabric-ca/crypto/cas/rca-naver , /root/cas/rca-orderer
    export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE # /crypto-config/rca-certs/rca.org${ORG}.com-cert.pem
   #  fabric-ca-client affiliation add ${ORG}
-   fabric-ca-client enroll -d --id.affiliation ${ORG} -u https://$CA_ADMIN_USER_PASS@$CA_HOST_PORT 
+   fabric-ca-client enroll -d  -u https://$CA_ADMIN_USER_PASS@$CA_HOST_PORT 
 }
 
 function registerIdentities {
@@ -52,12 +52,12 @@ function registerOrdererIdentities {
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
          initOrdererVars $ORG $((COUNT-1))
          echo "Registering $ORDERER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS --id.type orderer --id.affiliation ${ORG}
+         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS --id.type orderer 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.affiliation ${ORG} --id.attrs  "admin=true:ecert"
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.attrs  "admin=true:ecert"
    done
 }
 
@@ -72,14 +72,14 @@ function registerPeerIdentities {
       while [[ "$COUNT" -le $NUM_PEERS ]]; do
          initPeerVars $ORG $((COUNT-1))
          echo "Registering $PEER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer --id.affiliation ${ORG}
+         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.affiliation ${ORG} --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert"
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.type admin --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert"
       echo "Registering user identity with $CA_NAME"
-      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS --id.affiliation ${ORG} 
+      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS 
    done
 }
 
@@ -106,7 +106,7 @@ function enrollPeer {
     for (( i=0; i<$NUM_PEERS; i++ ));do
       initPeerVars $ORG $i     #ex) initPeerVars naver 0 
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
-      fabric-ca-client enroll -d --id.affiliation ${ORG} --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/$ORG/peer$i/tls --csr.hosts $PEER_HOST
+      fabric-ca-client enroll -d  --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/$ORG/peer$i/tls --csr.hosts $PEER_HOST
 
       # Copy the TLS key and cert to the appropriate place
       mkdir -p $TLSDIR
@@ -122,7 +122,7 @@ function enrollPeer {
 
 
       # Enroll the peer to get an enrollment certificate and set up the core's local MSP directory
-      fabric-ca-client enroll -d --id.affiliation ${ORG} -u $ENROLLMENT_URL -M $MSPDIR
+      fabric-ca-client enroll -d  -u $ENROLLMENT_URL -M $MSPDIR
       finishMSPSetup $MSPDIR 
       copyAdminCert $MSPDIR $PEER_HOST
       
@@ -183,16 +183,16 @@ function printOrdererOrg {
     # Policies defines the set of policies at this level of the config tree
     # For organization policies, their canonical path is usually
     #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
-    Policies:
-        Readers:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.member')\"
-        Writers:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.member')\"
-        Admins:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.admin')\"   "
+    # Policies:
+    #     Readers:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.member')\"
+    #     Writers:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.member')\"
+    #     Admins:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.admin')\"   "
 }
 
 # printPeerOrg <ORG> <COUNT>
@@ -203,16 +203,16 @@ function printPeerOrg {
     # Policies defines the set of policies at this level of the config tree
     # For organization policies, their canonical path is usually
     #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
-    Policies:
-        Readers:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.peer', '${ORG}MSP.client')\"
-        Writers:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.client')\"
-        Admins:
-            Type: Signature
-            Rule: \"OR('${ORG}MSP.admin')\"
+    # Policies:
+    #     Readers:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.admin', '${ORG}.peer', '${ORG}.client')\"
+    #     Writers:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.admin', '${ORG}.client')\"
+    #     Admins:
+    #         Type: Signature
+    #         Rule: \"OR('${ORG}.admin')\"
     AnchorPeers:
        # AnchorPeers defines the location of peers which can be used
        # for cross org gossip communication.  Note, this value is only
@@ -330,7 +330,7 @@ Application: &ApplicationDefaults
             Rule: \"ANY Writers\"
         Admins:
             Type: ImplicitMeta
-            Rule: \"MAJORITY Admins\"
+            Rule: \"ANY Admins\"
 
     Capabilities:
         <<: *ApplicationCapabilities
@@ -485,8 +485,8 @@ Profiles:
         echo "                - *${ORG}"
     done
     echo "
-        Capabilities:
-          <<: *ApplicationCapabilities
+            Capabilities:
+              <<: *ApplicationCapabilities
    "
    } > /etc/hyperledger/fabric/configtx.yaml
    # Copy it to the data directory to make debugging easier

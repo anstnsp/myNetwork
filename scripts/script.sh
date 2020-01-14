@@ -21,7 +21,7 @@ setGlobals() {
   ORG=$2
   CORE_PEER_LOCALMSPID=${ORG}MSP
   CORE_PEER_TLS_ROOTCERT_FILE=$PEER_CERT_FILE_COMMON_DIR/${ORG}Organization/org${ORG}/peers/peer$PEER/tls/ca.crt
-  CORE_PEER_MSPCONFIGPATH=${PEER_CERT_FILE_COMMON_DIR}/${ORG}Organization/org${ORG}/msp
+  CORE_PEER_MSPCONFIGPATH=${PEER_CERT_FILE_COMMON_DIR}/${ORG}Organization/org${ORG}/admin/msp
   CORE_PEER_ADDRESS=peer$PEER.org$ORG.com:7051
 }
 
@@ -32,11 +32,11 @@ createChannel() {
   echo "================================== Create Channel =================================="
   echo
   echo "sleep 15"
-  sleep 15
+  sleep 5
   set -x
   peer channel create -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f $CHANNEL_TX_FILE --tls true --cafile $ORDERER_CA >&log.txt
   res=$?
-  set +x
+  set +x #명령어 실행 후 명령어 echo로 출력 
   cat log.txt
   verifyResult $res "Channel Creation failed"
   echo "========================== Channel '$CHANNEL_NAME' created ==========================="
@@ -74,7 +74,7 @@ joinChannelCommend() {
 
 # 앵커피어설정
 updateAnchorPeers() {
-  for org in $PEER_ORGS_NAME; 
+  for org in $PEER_ORGS; 
   do
     updateAnchorPeerCommend $org
     sleep $SLEEP_TIME
@@ -89,12 +89,12 @@ updateAnchorPeerCommend() {
 
   echo "====================== peer${PEER}.org${ORG} Anchor peer setting start ======================"
   set -x
-  peer channel update -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f ./channel-artifacts/${ORG}MSPanchors.tx --tls true --cafile $ORDERER_CA >&log.txt
+  peer channel update -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f /channel-artifacts/${ORG}MSP_anchors.tx --tls true --cafile $ORDERER_CA >&log.txt
   res=$?
   set +x
   cat log.txt
   verifyResult $res "peer${PEER}.org${ORG}.com anchor peer update failed"
-  echo "============== peer${PEER}.org${ORG} Anchor peer setting complate '$CHANNEL_NAME' ============="
+  echo "============== peer${PEER}.org${ORG} Anchor peer setting complete '$CHANNEL_NAME' ============="
   echo
   echo
   echo
@@ -102,8 +102,8 @@ updateAnchorPeerCommend() {
 
 # 체인코드 인스톨
 chaincodeInstall() {
-  for org in $PEER_ORGS_NAME; do
-    for ((peer_num=0;peer_num<$PEERS_NUM;peer_num++)); do
+  for org in $PEER_ORGS; do
+    for ((peer_num=0; peer_num < ${NUM_PEERS}; peer_num++)); do
       chaincodeInstallCommend $peer_num $org
         sleep $SLEEP_TIME
       echo
@@ -131,12 +131,12 @@ chaincodeInstallCommend() {
 
 # 체인코드 instantiate
 chaincodeInstantiate() {
-  setGlobals 0 ${PEER_ORGS_NAME[0]}
+  setGlobals 0 ${PEER_ORGS[0]}
 
   echo "================================ instantiate start ================================="
   set -x
-  #peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' >&log.txt
-  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' -P "OR ('hccMSP.peer', 'lotMSP.peer', 'swtMSP.peer')" --collections-config /opt/gopath/src/github.com/chaincode/hcc-last-chaincode/collection_config.json >&log.txt
+  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["Init"]}' >&log.txt
+  #peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' -P "OR ('hccMSP.peer', 'lotMSP.peer', 'swtMSP.peer')" --collections-config /opt/gopath/src/github.com/chaincode/hcc-last-chaincode/collection_config.json >&log.txt
 #  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' --collections-config /opt/gopath/src/github.com/chaincode/marbles02_private/collections_config.json >&log.txt
   res=$?
   set +x
@@ -149,7 +149,7 @@ chaincodeInstantiate() {
 
 # 체인코드 upgrade
 chaincodeUpgrade() {
-  setGlobals 0 ${PEER_ORGS_NAME[0]}
+  setGlobals 0 ${PEER_ORGS[0]}
 
   echo "================================ upgrade start ================================="
   set -x
@@ -166,7 +166,7 @@ chaincodeUpgrade() {
 
 # NodeJS체인코드 인스톨
 NodeJSchaincodeInstall() {
-  for org in $PEER_ORGS_NAME; do
+  for org in $PEER_ORGS; do
     for ((peer_num=0;peer_num<$PEERS_NUM;peer_num++)); do
       NodeJSchaincodeInstallCommend $peer_num $org
         sleep $SLEEP_TIME
@@ -195,7 +195,7 @@ NodeJSchaincodeInstallCommend() {
 
 # NodeJS체인코드 instantiate
 NodeJSchaincodeInstantiate() {
-  setGlobals 0 ${PEER_ORGS_NAME[0]}
+  setGlobals 0 ${PEER_ORGS[0]}
 
   echo "================================ instantiate start ================================="
   set -x

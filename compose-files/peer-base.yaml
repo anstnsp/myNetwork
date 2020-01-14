@@ -9,9 +9,9 @@ services:
     image: hyperledger/fabric-peer
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=nice
+      # - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=nice
       - FABRIC_LOGGING_SPEC=info
-      #- FABRIC_LOGGING_SPEC=DEBUG
+      # - FABRIC_LOGGING_SPEC=DEBUG
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_GOSSIP_USELEADERELECTION=false
       - CORE_PEER_GOSSIP_ORGLEADER=true
