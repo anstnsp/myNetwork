@@ -135,7 +135,7 @@ chaincodeInstantiate() {
 
   echo "================================ instantiate start ================================="
   set -x
-  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["Init"]}' >&log.txt
+  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["initLedger"]}' >&log.txt
   #peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' -P "OR ('hccMSP.peer', 'lotMSP.peer', 'swtMSP.peer')" --collections-config /opt/gopath/src/github.com/chaincode/hcc-last-chaincode/collection_config.json >&log.txt
 #  peer chaincode instantiate -o $ORDERER_ENDPOINT --tls true --cafile $ORDERER_CA -C $CHANNEL_NAME -n $CC_NAME -l $CC_LANGUAGE -v $CC_VERSION -c '{"Args":["init"]}' --collections-config /opt/gopath/src/github.com/chaincode/marbles02_private/collections_config.json >&log.txt
   res=$?

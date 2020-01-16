@@ -47,9 +47,9 @@ CHANNEL_NAME=mychannel
 SYSTEM_CHANNEL_NAME=syschannel 
 
 #go버전 최신 체인코드 
-CC_SRC_PATH=chaincode/fabcar/go
+CC_SRC_PATH=/src/chaincode/fabcar/javascript
 # 체인코드 언어(GO)
-CC_LANGUAGE=golang
+CC_LANGUAGE=node 
 # Orderer tls 인증서 경로
 ORDERER_CA=/crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp/tlscacerts/rca-orgorderer-com-7054.pem
 

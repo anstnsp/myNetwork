@@ -1,14 +1,4 @@
-# cd compose-files 
-# docker-compose up -d rca.orgorderer.com rca.orgnaver.com rca.orgkakao.com setup 
-
-# echo "sleep 10s..."
-# sleep 10s 
-
-# docker-compose up -d orderer0.orgorderer.com peer0.orgnaver.com peer1.orgnaver.com peer0.orgkakao.com peer1.orgkakao.com 
-
-# cd ..
-
-
+#!/bin/bash
 set -e
 
 source ./scripts/env.sh
@@ -20,37 +10,47 @@ function printHelp() {
   echo "==========================================================================================="
   echo
   echo "Usage: "
-  echo "  hcc-dev.sh <mode>"
+  echo "  start-network.sh <mode>"
   echo "  <mode> - one of '-start', '-up', '-down', '-generate', '-channel', '-join', -upgrade"
   echo "           '-anchor', '-install', '-instantiate'"
-  echo "    -> '-start : Bring up the network with docker-compose up and set all blockchain system'"
-  echo "    -> '-up' : Bring up the network with docker-compose up"
-  echo "    -> '-down' : Clear the network with docker-compose down"
-  echo "     -> '-remove' : Remove artifacts and crypto-material with docker-compose down"
-  echo "    -> '-generate' : Generate required certificates and genesis block"
-  echo "    -> '-channel' : Create channel in blockchain system"
-  echo "    -> '-join' : Join all peers in channel"
-  echo "    -> '-anchor' : Set all Anchor peers"
-  echo "    -> '-install' : Install chaincode to all peers"
-  echo "    -> '-instantiate' : Instantiate chaincode to channel"
+  echo "    -> '-start     : 인증서발급부터 체인코드인스턴시에이트 까지 END-TO-END'"
+  echo "    -> '-up'       : 네트워크 시작 "
+  echo "    -> '-down'     : 네트워크 중지"
+  echo "    -> '-remove'   : 인증서를 삭제하고 네트워크 중지 및 도커볼륨 삭제 "
+  echo "    -> '-generate' : CA서버로부터 인증서발급 및 채널artifacts 생성"
+  echo "    -> '-channel'  : 채널 생성"
+  echo "    -> '-join'     : 모든피어를 채널에 조인"
+  echo "    -> '-anchor'   : 앵커피어 셋팅 "
+  echo "    -> '-install'  : 모든피어에 체인코드 설치"
+  echo "    -> '-instantiate' : 체인코드 인스턴시에이트 "
   echo
   echo
   echo "example: "
   echo
-  echo "     hcc-dev.sh -start"
-  echo "     hcc-dev.sh -generate"
-  echo "     hcc-dev.sh -up"
-  echo "     hcc-dev.sh -down"
-  echo "     hcc-dev.sh -remove"
-  echo "     hcc-dev.sh -channel"
-  echo "     hcc-dev.sh -join"
-  echo "     hcc-dev.sh -anchor"
-  echo "     hcc-dev.sh -install"
-  echo "     hcc-dev.sh -instantiate"
-  echo "     hcc-dev.sh -upgrade"
-  echo "     hcc-dev.sh -nodeinstall"
-  echo "     hcc-dev.sh -nodeinstantiate"
-  echo
+  echo "     start-network.sh -start"
+  echo "     start-network.sh -generate"
+  echo "     start-network.sh -up"
+  echo "     start-network.sh -down"
+  echo "     start-network.sh -remove"
+  echo "     start-network.sh -channel"
+  echo "     start-network.sh -join"
+  echo "     start-network.sh -anchor"
+  echo "     start-network.sh -install"
+  echo "     start-network.sh -instantiate"
+  echo "     start-network.sh -upgrade"
+  echo "     start-network.sh -nodeinstall"
+  echo "     start-network.sh -nodeinstantiate"
+  echo ""
+  echo "     *** 구동 시 순서 ***"
+  echo "     1)start-network.sh -generate" 
+  echo "     2)start-network.sh -up"
+  echo "     3)start-network.sh -channel"
+  echo "     4)start-network.sh -join"
+  echo "     5)start-network.sh -anchor"
+  echo "     6)start-network.sh -install"
+  echo "     7)start-network.sh -instantiate"
+  echo "     *** 한번에 전부 시작 ***"
+  echo "     1)start-network.sh -start"
   echo "==========================================================================================="
   echo
 
@@ -78,13 +78,17 @@ function generateCertsAndChannelArtifacts() {
   cd compose-files 
   for ORG in $ORGS; do 
     echo " rca.org${ORG}.com start..." 
-    docker-compose --project-name nice up -d rca.org${ORG}.com 
+    docker-compose up -d rca.org${ORG}.com 
   done 
   
   sleep 2s
-  docker-compose --project-name nice up  -d setup 
+  docker-compose up  -d setup 
   echo " " 
-
+  # $$는 현재 스크립트의 PID를 나타냄 
+  # $!는 최근에 실행한 백그라운드(비동기) 명령의 PID
+  # wait PID 하면 해당 PID가 끝날때까지 기다림. 
+  # $? 최근에 실행된 명령어, 함수, 스크립트 자식의 종료 상태
+  waitGen 
   res=$?
   set +x
   if [ $res -ne 0 ]; then
@@ -107,24 +111,24 @@ function networkUp() {
   #PEER_ORGS
   for ORG in $PEER_ORGS; do
     for (( i=0; i<$NUM_PEERS; i++ ));do
-      docker-compose --project-name nice up -d peer${i}.org${ORG}.com 
+      docker-compose up -d peer${i}.org${ORG}.com 
     done
   done
 
   #ORDERER_ORGS
   for ORG in $ORDERER_ORGS; do
     for (( i=0; i<$NUM_ORDERERS; i++ ));do
-      docker-compose --project-name nice up -d orderer${i}.org${ORG}.com 
+      docker-compose up -d orderer${i}.org${ORG}.com 
     done
   done
-  docker-compose --project-name nice up -d cli 
+  docker-compose up -d cli 
   cd ../
 }
 
 # 블록체인 다운
 function networkDown() {  
   cd ./compose-files
-  docker-compose --project-name nice down 
+  docker-compose  down 
   docker stop $(docker ps -aq)
   docker rm $(docker ps -aq)
   docker rmi $(docker images dev-* -q)
@@ -143,17 +147,35 @@ function removeVolume() {
   if [ -d "channel-artifacts" ]; then 
     sudo rm -r channel-artifacts
   fi 
+  docker network prune 
+  docker system prune 
+  docker volume prune 
   set +x 
   res=$? 
   echo $res 
-    docker network prune 
-    docker system prune 
-    docker volume prune 
-
-
 
 
 }
+
+#generate를 통해 configtx.yaml파일 생성까지 확인 
+function waitGen() {
+  
+  set +e 
+  set +x 
+  cd ..
+  local FILENAME=channel-artifacts/configtx.yaml 
+  # local FILENAME=configtx.yaml 
+  while true; do 
+    echo "Waiting for generaing $FILENAME ..." 
+    if [ -f ${FILENAME} ]; then
+      break
+    fi 
+    sleep 1 
+  done
+  cd compose-files
+  
+}
+
 # 채널생성
 function createChannel() {
   docker exec cli /scripts/script.sh "create-channel"
@@ -188,6 +210,7 @@ function upgrade() {
 
 
 if [ "$1" == "-start" ]; then
+  generateCertsAndChannelArtifacts
   networkUp
   blockChainAllSet
 elif [ "$1" == "-up" ]; then

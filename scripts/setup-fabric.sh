@@ -52,12 +52,12 @@ function registerOrdererIdentities {
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
          initOrdererVars $ORG $((COUNT-1))
          echo "Registering $ORDERER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS --id.type orderer 
+         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS --id.affiliation ${ORG} --id.type orderer 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.attrs  "admin=true:ecert"
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.affiliation ${ORG} --id.attrs  "admin=true:ecert"
    done
 }
 
@@ -72,14 +72,14 @@ function registerPeerIdentities {
       while [[ "$COUNT" -le $NUM_PEERS ]]; do
          initPeerVars $ORG $((COUNT-1))
          echo "Registering $PEER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer 
+         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.affiliation ${ORG} --id.type peer 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.type admin --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert"
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.affiliation ${ORG} --id.type admin --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert"
       echo "Registering user identity with $CA_NAME"
-      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS 
+      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS --id.affiliation ${ORG}
    done
 }
 
@@ -186,13 +186,13 @@ function printOrdererOrg {
     # Policies:
     #     Readers:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.member')\"
+    #         Rule: \"OR('${ORG}MSP.member')\"
     #     Writers:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.member')\"
+    #         Rule: \"OR('${ORG}MSP.member')\"
     #     Admins:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.admin')\"   "
+    #         Rule: \"OR('${ORG}MSP.admin')\"   "
 }
 
 # printPeerOrg <ORG> <COUNT>
@@ -206,13 +206,13 @@ function printPeerOrg {
     # Policies:
     #     Readers:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.admin', '${ORG}.peer', '${ORG}.client')\"
+    #         Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.peer', '${ORG}MSP.client')\"
     #     Writers:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.admin', '${ORG}.client')\"
+    #         Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.client')\"
     #     Admins:
     #         Type: Signature
-    #         Rule: \"OR('${ORG}.admin')\"
+    #         Rule: \"OR('${ORG}MSP.admin')\"
     AnchorPeers:
        # AnchorPeers defines the location of peers which can be used
        # for cross org gossip communication.  Note, this value is only
