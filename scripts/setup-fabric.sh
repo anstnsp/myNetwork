@@ -31,7 +31,7 @@ function enrollCAAdmin {
    echo "Enrolling with $CA_NAME as bootstrap identity ..."
    export FABRIC_CA_CLIENT_HOME=$HOME/cas/$CA_NAME  #/etc/hyperledger/fabric-ca/crypto/cas/rca-orderer , /etc/hyperledger/fabric-ca/crypto/cas/rca-naver , /root/cas/rca-orderer
    export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE # /crypto-config/rca-certs/rca.org${ORG}.com-cert.pem
-  #  fabric-ca-client affiliation add ${ORG}
+   # fabric-ca-client affiliation add ${ORG}
    fabric-ca-client enroll -d  -u https://$CA_ADMIN_USER_PASS@$CA_HOST_PORT 
 }
 
@@ -74,19 +74,19 @@ function registerIdentities {
 function registerOrdererIdentities {
    for ORG in $ORDERER_ORGS; do
       initOrgVars $ORG
-      # fabric-ca-client affiliation add ${ORG}
-      # fabric-ca-client affiliation list 
       enrollCAAdmin
+      fabric-ca-client affiliation add ${ORG}
+      fabric-ca-client affiliation list 
       local COUNT=1
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
          initOrdererVars $ORG $((COUNT-1))
          echo "Registering $ORDERER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS  --id.type orderer   --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS  --id.type orderer --id.affiliation ${ORG}  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default 
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.type admin  --id.attrs  "admin=true:ecert"  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.type admin --id.affiliation ${ORG} --id.attrs  "admin=true:ecert"  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
    done
 }
 
@@ -97,21 +97,23 @@ function registerPeerIdentities {
       # fabric-ca-client affiliation add ${ORG}
       # fabric-ca-client affiliation list 
       enrollCAAdmin
+      fabric-ca-client affiliation add ${ORG}
+      fabric-ca-client affiliation list 
       local COUNT=1
       while [[ "$COUNT" -le $NUM_PEERS ]]; do
          initPeerVars $ORG $((COUNT-1))
          echo "Registering $PEER_NAME with $CA_NAME"
          #PEER 등록 (Register peer)
-         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS  --id.type peer --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer  --id.affiliation ${ORG} --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
       #조직의 admin등록 (Register admin)
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.type admin --id.attrs "hf.Registrar.Roles=client,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.type client  --id.affiliation ${ORG} --id.attrs "hf.Registrar.Roles=admin,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
       echo "Registering user identity with $CA_NAME"
       #client 등록 (Register client) << dapp에서는 admin이나 client 쓰면됨.  
-      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS  --id.type client --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS --id.type user  --id.affiliation ${ORG} --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
    done
 }
 
@@ -138,7 +140,7 @@ function enrollPeer {
     for (( i=0; i<$NUM_PEERS; i++ ));do
       initPeerVars $ORG $i     #ex) initPeerVars naver 0 
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
-      fabric-ca-client enroll -d  --csr.names C=KR,O=${ORG},OU=peer,ST=Seoul --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/$ORG/peer$i/tls --csr.hosts $PEER_HOST
+      fabric-ca-client enroll -d  --csr.names C=KR,O=${ORG},ST=Seoul --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/$ORG/peer$i/tls --csr.hosts $PEER_HOST
 
       # Copy the TLS key and cert to the appropriate place
       mkdir -p $TLSDIR
@@ -154,7 +156,10 @@ function enrollPeer {
 
 
       # Enroll the peer to get an enrollment certificate and set up the core's local MSP directory
-      fabric-ca-client enroll -d  --csr.names C=KR,O=${ORG},OU=peer,ST=Seoul -u $ENROLLMENT_URL -M $MSPDIR
+      fabric-ca-client enroll -d  --csr.names C=KR,O=${ORG},ST=Seoul -u $ENROLLMENT_URL -M $MSPDIR
+      # *_sk를 server.key 로 변경 
+      mv  $MSPDIR/keystore/* $MSPDIR/keystore/server.key
+      
       finishMSPSetup $MSPDIR 
       copyAdminCert $MSPDIR $PEER_HOST
       makeConfigOU $ORG $MSPDIR
@@ -267,7 +272,7 @@ function printPeerOrg {
     Policies:
         Readers:
             Type: Signature
-            Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.peer', '${ORG}MSP.client')\"
+            Rule: \"OR('${ORG}MSP.admin','${ORG}MSP.peer',  '${ORG}MSP.client')\"
         Writers:
             Type: Signature
             Rule: \"OR('${ORG}MSP.admin', '${ORG}MSP.client')\"

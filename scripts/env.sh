@@ -243,7 +243,7 @@ function switchToAdminIdentity {
       echo "Enrolling admin '$ADMIN_NAME' with $CA_HOST_PORT ..."
       export FABRIC_CA_CLIENT_HOME=$ORG_ADMIN_HOME
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
-      fabric-ca-client enroll -d  --csr.names C=KR,O=${ORG},ST=Seoul  -u https://$ADMIN_NAME:$ADMIN_PASS@$CA_HOST_PORT
+      fabric-ca-client enroll -d --csr.names C=KR,O=${ORG},ST=Seoul  -u https://$ADMIN_NAME:$ADMIN_PASS@$CA_HOST_PORT
       # If admincerts are required in the MSP, copy the cert there now and to my local MSP also
       if [ $ADMINCERTS ]; then
          mkdir -p $(dirname "${ORG_ADMIN_CERT}")
@@ -252,8 +252,12 @@ function switchToAdminIdentity {
          cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/admincerts
          # local copy
          cp $ORG_ADMIN_HOME/msp/signcerts/* ${ORG_ADMIN_CERT}
+         # *_sk 를 server.key로 변경 
+         mv $ORG_ADMIN_HOME/msp/keystore/* $ORG_ADMIN_HOME/msp/keystore/server.key
          makeConfigOU ${ORG} ${ORG_ADMIN_HOME}/msp
       fi
+  
    fi
+
    export CORE_PEER_MSPCONFIGPATH=$ORG_ADMIN_HOME/msp
 }

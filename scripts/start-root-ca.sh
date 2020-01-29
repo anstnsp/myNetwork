@@ -22,12 +22,12 @@ cp $FABRIC_CA_SERVER_HOME/ca-cert.pem /crypto-config/${FABRIC_CA_SERVER_CA_NAME:
 
 FABRIC_ORGS="orderer naver kakao"
 # Add the custom orgs
-for o in $FABRIC_ORGS; do
-   aff=$aff"\n   $o: []"
-done
-aff="${aff#\\n   }"
-sed -i "/affiliations:/a \\   $aff" \
-   $FABRIC_CA_SERVER_HOME/fabric-ca-server-config.yaml
+# for o in $FABRIC_ORGS; do
+#    aff=$aff"\n   $o: []"
+# done
+# aff="${aff#\\n   }"
+# sed -i "/affiliations:/a \\   $aff" \
+#    $FABRIC_CA_SERVER_HOME/fabric-ca-server-config.yaml
 
 # TEST_EXPIRY="expiry: ${TEST_EXPIRY}"
 # echo $TEST_EXPIRY
