@@ -211,6 +211,47 @@ NodeJSchaincodeInstantiate() {
   echo
 }
 
+function updateConfigAddOrg() {
+  echo "############################################################################"
+  echo "##### update config start  #########"
+  echo "############################################################################"
+
+export CHANNEL_NAME=$CHANNEL_NAME
+export ORDERER_CA=$ORDERER_CA
+
+#config블럭 가져옴
+peer channel fetch config config_block.pb -o orderer0.orgorderer.com:7050 -c mychannel --tls --cafile /crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp/tlscacerts/rca-orgorderer-com-7054.pem
+#가져온 컨피그블럭에서 필요한 거만 추려서 json으로 디코딩 
+configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
+
+jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"lg":.[1]}}}}}' config.json lg.json > modified_config.json
+
+#config.json 을 다시 pb타입으로 인코딩 
+configtxlator proto_encode --input config.json --type common.Config --output config.pb
+
+#조직 추가한 modified_config.json도 pb로 인코딩 
+configtxlator proto_encode --input modified_config.json --type common.Config --output modified_config.pb
+
+#기존 config와 수정된 config의 차분 계산 해서 addorg_update.pb파일로 떨굼. 
+configtxlator compute_update --channel_id $CHANNEL_NAME --original config.pb --updated modified_config.pb --output addorg_update.pb
+
+#차분계산한 addorg_update.pb파일을 json으로 디코딩 
+configtxlator proto_decode --input addorg_update.pb --type common.ConfigUpdate | jq . > addorg_update.json
+
+#처음에 config블럭 가져올때 뺏던 헤더 다시 삽입
+echo '{"payload":{"header":{"channel_header":{"channel_id":"'$CHANNEL_NAME'", "type":2}},"data":{"config_update":'$(cat addorg_update.json)'}}}' | jq . > addorg_update_in_envelope.json
+
+#헤더까지 집어넣어서 완성된 json을 마지막으로 pb로 인코딩
+configtxlator proto_encode --input addorg_update_in_envelope.json --type common.Envelope --output addorg_update_in_envelope.pb
+
+#해당 권한에 맞게 위에서 만든 pb파일에 서명. 
+peer channel signconfigtx -f addorg_update_in_envelope.pb
+
+#채널에 환경설정 업데이트 
+peer channel update -f addorg_update_in_envelope.pb -c $CHANNEL_NAME -o orderer0.orgorderer.com:7050 --tls --cafile $ORDERER_CA
+
+}
+
 if [ "${PARM}" == "all" ]; then
   createChannel
   joinChannel
@@ -250,6 +291,10 @@ elif [ "${PARM}" == "NodeJSchaincode-install" ]; then
 elif [ "${PARM}" == "NodeJSchaincode-instantiate" ]; then
   NodeJSchaincodeInstantiate
   echo "NodeJSChaincode instantiate finished"
+  echo
+elif [ "${PARM}" == "config-update" ]; then 
+  updateConfigAddOrg
+  echo "updateConfigAddOrg finished"
   echo 
 else
   echo "Please input the arg"

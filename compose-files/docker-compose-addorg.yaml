@@ -1,0 +1,152 @@
+version: '2.1'
+
+networks:
+  nice:
+    name: anstnsp
+    ipam:
+      driver: default
+      # config:
+      #   - subset: 123.123.123.0/16
+
+services:
+
+  rca.orglg.com:
+    container_name: rca.orglg.com
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca/crypto
+      #CSR 설정 
+      - FABRIC_CA_SERVER_CSR_CN=rca.orglg.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=rca.orglg.com
+      # - FABRIC_CA_SERVER_CSR_NAMES
+      - FABRIC_CA_SERVER_DEBUG=true
+      - FABRIC_CA_SERVER_CA_NAME=rca-lg
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+      #인증서 기간 (10년)
+      - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h 
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600h
+    ports:
+      - 37054:7054   
+    command: /bin/bash -c '/scripts/start-root-ca.sh '
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - /var/hyperledger/production/ca/ca-lg-server:/etc/hyperledger/fabric-ca/crypto
+    networks:
+      - nice
+    
+  peer0.orglg.com:
+    container_name: peer0.orglg.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orglg.com
+      - CORE_PEER_ADDRESS=peer0.orglg.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orglg.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.orglg.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orglg.com:7051
+      - CORE_PEER_LOCALMSPID=lgMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.orglg.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orglg.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/lgOrganization/orglg/peers/peer0/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/lgOrganization/orglg/peers/peer0/tls:/etc/hyperledger/fabric/tls
+        - /var/hyperledger/production/lg/peer0:/var/hyperledger/production
+    ports:
+      - "11051:7051"
+      - "11052:7052"
+
+  peer1.orglg.com:
+    container_name: peer1.orglg.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.orglg.com
+      - CORE_PEER_ADDRESS=peer1.orglg.com:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.orglg.com:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orglg.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.orglg.com:7051
+      - CORE_PEER_LOCALMSPID=lgMSP
+      # FOR OPERATIONS SERVICE 
+      - CORE_METRICS_PROVIDER=prometheus
+      - CORE_OPERATIONS_LISTENADDRESS=peer1.orglg.com:9443
+      # COUCHDB CONFIG
+      # - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.orglg.com:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      # - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    # depends_on:
+    #   - couchdb0.orghcc.com
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/lgOrganization/orglg/peers/peer1/msp:/etc/hyperledger/fabric/msp 
+        - ../crypto-config/lgOrganization/orglg/peers/peer1/tls:/etc/hyperledger/fabric/tls
+        - /var/hyperledger/production/lg/peer1:/var/hyperledger/production
+    ports:
+      - "12051:7051"
+      - "12052:7052"
+
+  addorg-cli:
+    container_name: addorg-cli
+    image: hyperledger/fabric-tools:latest
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.orglg.com:7051
+      - CORE_PEER_LOCALMSPID=lgMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/crypto-config/lgOrganization/orglg/peers/peer0/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/crypto-config/lgOrganization/orglg/peers/peer0/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/lgOrganization/orglg/peers/peer0/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/crypto-config/lgOrganization/orglg/admin/msp
+    # working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    working_dir: /channel-artifacts
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../chaincode/:/src/chaincode
+        - ../crypto-config:/crypto-config
+        - ../scripts:/scripts
+        - ../channel-artifacts:/channel-artifacts
+        - ../addorg-artifacts:/addorg-artifacts
+    networks:
+      - nice 
+
+  add-setup:
+    container_name: add-setup
+    image: hyperledger/fabric-ca-tools
+    environment:
+      - ORDERER_HOME=/etc/hyperledger/orderer
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/add-setup-fabric.sh; sleep 99999'
+    volumes:
+      - ../scripts:/scripts
+      - ../crypto-config:/crypto-config
+      - ../channel-artifacts:/channel-artifacts
+      - ../addorg-artifacts:/addorg-artifacts
+    networks:
+      - nice

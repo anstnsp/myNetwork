@@ -20,7 +20,7 @@ cp $FABRIC_CA_SERVER_HOME/ca-cert.pem /crypto-config/rca-certs/${FABRIC_CA_SERVE
 cp $FABRIC_CA_SERVER_HOME/ca-cert.pem /crypto-config/${FABRIC_CA_SERVER_CA_NAME:4}Organization/org${FABRIC_CA_SERVER_CA_NAME:4}/ca/${FABRIC_CA_SERVER_CSR_CN}-cert.pem
 # cp $FABRIC_CA_SERVER_HOME/tls-cert.pem /crypto-config/${FABRIC_CA_SERVER_CA_NAME:4}Organization/org${FABRIC_CA_SERVER_CA_NAME:4}/tls/tls${FABRIC_CA_SERVER_CSR_CN}-cert.pem
 
-FABRIC_ORGS="orderer naver kakao"
+# FABRIC_ORGS="orderer naver kakao"
 # Add the custom orgs
 # for o in $FABRIC_ORGS; do
 #    aff=$aff"\n   $o: []"

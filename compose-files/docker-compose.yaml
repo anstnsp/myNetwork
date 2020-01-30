@@ -58,7 +58,6 @@ services:
       - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h 
       - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
       - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=87600h
-
     ports:
       - 17054:7054   
     command: /bin/bash -c '/scripts/start-root-ca.sh '

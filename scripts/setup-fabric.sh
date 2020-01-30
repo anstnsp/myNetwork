@@ -341,7 +341,7 @@ Capabilities:
         # prior releases.
         # Prior to enabling V1.3 channel capabilities, ensure that all
         # orderers and peers on a channel are at v1.3.0 or later.
-        V1_4_3: true
+        
         V1_3: true
         V1_1: true
         
@@ -555,6 +555,8 @@ Profiles:
     echo "
             Capabilities:
               <<: *ApplicationCapabilities
+
+
    "
    } > /etc/hyperledger/fabric/configtx.yaml
    # Copy it to the data directory to make debugging easier
