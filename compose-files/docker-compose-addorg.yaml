@@ -3,10 +3,7 @@ version: '2.1'
 networks:
   nice:
     name: anstnsp
-    ipam:
-      driver: default
-      # config:
-      #   - subset: 123.123.123.0/16
+    external: true
 
 services:
 
