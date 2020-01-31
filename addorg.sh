@@ -1,38 +1,69 @@
 
 #추가할 조직의 crypto-material(인증서,configtx.yaml 만들어야함.)
 
+
+
+
+function main() {
+  startRootCA
+  getCertificate
+  docker exec cli /scripts/script.sh "config-update"
+  sleep  5
+  peerAndCliUp
+  joinChannel
+  installChaincode
+}
+
+#추가할 조직의 CA시작 
 function startRootCA() {
+
+  echo "############################################################################"
+  echo "##### startRootCA  #########"
+  echo "############################################################################"
+
   cd compose-files 
-  docker-compose -f docker-compose-addorg.yaml up -d rca.orglg.com add-setup
+  docker-compose -f docker-compose-addorg.yaml up -d rca.orglg.com 
   cd ..
 }
 
-function addedOrgPeerUp() {
+#CA로부터 인증서 발급 
+function getCertificate() {
 
-  echo
+
   echo "############################################################################"
-  echo "##### Generate certificates using FABRIC-CA AND channel-artifacts  #########"
+  echo "##### getCertificate  #########"
   echo "############################################################################"
-
-
+ 
   if [ -d "addorg-artifacts" ]; then
-    rm -rf ./addorg-artifacts
+    sudo rm -rf ./addorg-artifacts
   fi
-  set -x
   mkdir addorg-artifacts
+
   cd compose-files 
+  docker-compose -f docker-compose-addorg.yaml up -d addorg-setup addorg-cli
+  cd ..
+  wait 
+}
 
+function wait() {
+  
+  local FILENAME=channel-artifacts/${PEER_ORGS}.json
+  # local FILENAME=configtx.yaml 
+  while true; do 
+    echo "Waiting for generaing ${PEER_ORGS}.json ..." 
+    if [ -f ${FILENAME} ]; then
+      break
+    fi 
+    sleep 1 
+  done
+  
+}
+
+function peerAndCliUp() {
+
+  cd compose-files 
   docker-compose -f docker-compose-addorg.yaml up -d peer0.orglg.com peer1.orglg.com addorg-cli
-
-
-  echo " " 
-  # $$는 현재 스크립트의 PID를 나타냄 
-  # $!는 최근에 실행한 백그라운드(비동기) 명령의 PID
-  # wait PID 하면 해당 PID가 끝날때까지 기다림. 
-  # $? 최근에 실행된 명령어, 함수, 스크립트 자식의 종료 상태
-
   res=$?
-  set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate certificates and channel-artifacts..."
     exit 1
@@ -40,11 +71,24 @@ function addedOrgPeerUp() {
   echo
 
   cd ../
+
 }
 
-startRootCA
-sleep 5
-docker exec cli /scripts/script.sh "config-update"
-sleep 5
-addedOrgPeerUp
+# 피어 채널 조인
+function joinChannel() {
+  docker exec addorg-cli /scripts/addorg-script.sh "join-channel"
+}
 
+# 채인코드 인스톨
+function installChaincode() {
+  docker exec addorg-cli /scripts/addorg-script.sh "chaincode-install"
+}
+
+
+
+set -e
+
+SDIR=$(dirname "$0")
+source $SDIR/scripts/addorg-env.sh
+
+main

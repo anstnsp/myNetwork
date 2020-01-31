@@ -220,7 +220,7 @@ export CHANNEL_NAME=$CHANNEL_NAME
 export ORDERER_CA=$ORDERER_CA
 
 #config블럭 가져옴
-peer channel fetch config config_block.pb -o orderer0.orgorderer.com:7050 -c mychannel --tls --cafile /crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp/tlscacerts/rca-orgorderer-com-7054.pem
+peer channel fetch config config_block.pb -o orderer0.orgorderer.com:7050 -c $CHANNEL_NAME --tls --cafile $ORDERER_CA
 #가져온 컨피그블럭에서 필요한 거만 추려서 json으로 디코딩 
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
 

@@ -18,7 +18,6 @@ services:
       #CSR 설정 
       - FABRIC_CA_SERVER_CSR_CN=rca.orglg.com
       - FABRIC_CA_SERVER_CSR_HOSTS=rca.orglg.com
-      # - FABRIC_CA_SERVER_CSR_NAMES
       - FABRIC_CA_SERVER_DEBUG=true
       - FABRIC_CA_SERVER_CA_NAME=rca-lg
       - FABRIC_CA_SERVER_TLS_ENABLED=true
@@ -136,13 +135,13 @@ services:
     networks:
       - nice 
 
-  add-setup:
-    container_name: add-setup
+  addorg-setup:
+    container_name: addorg-setup
     image: hyperledger/fabric-ca-tools
     environment:
       - ORDERER_HOME=/etc/hyperledger/orderer
       - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
-    command: /bin/bash -c '/scripts/add-setup-fabric.sh; sleep 99999'
+    command: /bin/bash -c '/scripts/addorg-setup-fabric.sh; sleep 99999'
     volumes:
       - ../scripts:/scripts
       - ../crypto-config:/crypto-config

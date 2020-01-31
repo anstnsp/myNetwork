@@ -147,6 +147,7 @@ function removeVolume() {
   if [ -d "channel-artifacts" ]; then 
     sudo rm -r channel-artifacts
   fi 
+  docker rm -f $(docker ps -aq)
   docker network prune 
   docker system prune 
   docker volume prune 
@@ -166,7 +167,7 @@ function waitGen() {
   local FILENAME=channel-artifacts/configtx.yaml 
   # local FILENAME=configtx.yaml 
   while true; do 
-    echo "Waiting for generaing $FILENAME ..." 
+    echo "Waiting for generaing channel-artifacts ..." 
     if [ -f ${FILENAME} ]; then
       break
     fi 

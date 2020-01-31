@@ -14,7 +14,7 @@
 NETWORK=nice
 
 
-# Names of the peer organizations
+# 피어조직명
 PEER_ORGS="lg"
 
 # Number of peers in each peer organization
@@ -29,18 +29,8 @@ ORGS="$PEER_ORGS"
 # Set to true to populate the "admincerts" folder of MSPs
 ADMINCERTS=true
 
-
-# The remainder of this file contains variables which typically would not be changed.
-GENESIS_BLOCK_FILE=/channel-artifacts/genesis.block
-
-# The path to a channel transaction
-CHANNEL_TX_FILE=/channel-artifacts/channel.tx
-
 # Name of test channel
 CHANNEL_NAME=mychannel
-
-# Name of system channel 
-SYSTEM_CHANNEL_NAME=syschannel 
 
 #go버전 최신 체인코드 
 CC_SRC_PATH=/src/chaincode/fabcar/javascript
