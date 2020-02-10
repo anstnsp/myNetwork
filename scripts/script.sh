@@ -25,16 +25,54 @@ setGlobals() {
   CORE_PEER_ADDRESS=peer$PEER.org$ORG.com:7051
 }
 
+#채널아티팩트 생성 
+function generateChannelArtifacts() {
+  which configtxgen
+  if [ "$?" -ne 0 ]; then
+    echo "configtxgen tool not found. exiting"
+    exit 1
+  fi
+  # export FABRIC_CFG_PATH=/channel-artifacts 
+  echo "Generating orderer genesis block at $GENESIS_BLOCK_FILE"
+  # Note: For some unknown reason (at least for now) the block file can't be
+  # named orderer.genesis.block or the orderer will fail to launch!
+  configtxgen -profile TwoOrgsOrdererGenesis -channelID $SYSTEM_CHANNEL_NAME -outputBlock $GENESIS_BLOCK_FILE
+  
+  if [ "$?" -ne 0 ]; then
+    echo "Failed to generate orderer genesis block"
+    exit 1
+  fi
+
+  echo "Generating channel configuration transaction at $CHANNEL_TX_FILE"
+  configtxgen -profile TwoOrgsChannel -outputCreateChannelTx $CHANNEL_TX_FILE -channelID $CHANNEL_NAME
+  if [ "$?" -ne 0 ]; then
+    echo "Failed to generate channel configuration transaction"
+    exit 1
+  fi
+
+  for ORG in $PEER_ORGS; do
+     initOrgVars $ORG
+     echo "Generating anchor peer update transaction for $ORG at $ANCHOR_TX_FILE"
+     configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate $ANCHOR_TX_FILE \
+                 -channelID $CHANNEL_NAME -asOrg $ORG
+     if [ "$?" -ne 0 ]; then
+        echo "Failed to generate anchor peer update for $ORG"
+        exit 1
+     fi
+  done
+}
 
 # 채널생성
 createChannel() {
   echo
   echo "================================== Create Channel =================================="
   echo
-  echo "sleep 15"
+  echo "sleep 5"
   sleep 5
   set -x
+  # export FABRIC_CFG_PATH=/etc/hyperledger/fabric
   peer channel create -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f $CHANNEL_TX_FILE --tls true --cafile $ORDERER_CA >&log.txt
+  cp $CHANNEL_NAME.block channel-artifacts
   res=$?
   set +x #명령어 실행 후 명령어 echo로 출력 
   cat log.txt
@@ -89,7 +127,7 @@ updateAnchorPeerCommend() {
 
   echo "====================== peer${PEER}.org${ORG} Anchor peer setting start ======================"
   set -x
-  peer channel update -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f /channel-artifacts/${ORG}MSP_anchors.tx --tls true --cafile $ORDERER_CA >&log.txt
+  peer channel update -o $ORDERER_ENDPOINT -c $CHANNEL_NAME -f /etc/hyperledger/fabric/channel-artifacts/${ORG}MSP_anchors.tx --tls true --cafile $ORDERER_CA >&log.txt
   res=$?
   set +x
   cat log.txt
@@ -224,7 +262,7 @@ peer channel fetch config config_block.pb -o orderer0.orgorderer.com:7050 -c $CH
 #가져온 컨피그블럭에서 필요한 거만 추려서 json으로 디코딩 
 configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > config.json
 
-jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"lg":.[1]}}}}}' config.json lg.json > modified_config.json
+jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"lg":.[1]}}}}}' config.json channel-artifacts/lg.json > modified_config.json
 
 #config.json 을 다시 pb타입으로 인코딩 
 configtxlator proto_encode --input config.json --type common.Config --output config.pb
@@ -253,6 +291,7 @@ peer channel update -f addorg_update_in_envelope.pb -c $CHANNEL_NAME -o orderer0
 }
 
 if [ "${PARM}" == "all" ]; then
+  generateChannelArtifacts
   createChannel
   joinChannel
   updateAnchorPeers
@@ -260,6 +299,10 @@ if [ "${PARM}" == "all" ]; then
   chaincodeInstantiate
   echo "  All setting finished!!"
   echo
+elif [ "${PARM}" == "generate-channel-artifacts" ]; then
+  generateChannelArtifacts
+  echo "generateChannelArtifacts finished!!"
+  echo 
 elif [ "${PARM}" == "create-channel" ]; then
   createChannel
   echo "  Create channel finished!!"

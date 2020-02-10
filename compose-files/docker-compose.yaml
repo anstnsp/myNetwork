@@ -97,26 +97,12 @@ services:
       - nice
 
   orderer0.orgorderer.com:
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
     container_name: orderer0.orgorderer.com
     image: hyperledger/fabric-orderer
-    environment:
-      - FABRIC_LOGGING_SPEC=DEBUG
-      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_GENESISMETHOD=file
-      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/orderer/orderer.genesis.block
-      - ORDERER_GENERAL_LOCALMSPID=ordererMSP
-      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/admin/msp
-      # enabled TLS
-      - ORDERER_GENERAL_TLS_ENABLED=true
-      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/orderer/tls/server.key
-      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/orderer/tls/server.crt
-      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/orderer/tls/ca.crt]
-      # kafka
-      - ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR=1
-      - ORDERER_KAFKA_VERBOSE=true
-
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric
-    command: orderer
     volumes:
     - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
     - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
@@ -125,6 +111,90 @@ services:
     - /var/hyperledger/production/orderer/orderer0:/var/hyperledger/production
     ports:
       - 7050:7050
+    networks:
+      - nice
+
+  orderer1.orgorderer.com:
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    # environment:
+    #   - ORDERER_GENERAL_LISTENPORT=8050
+    container_name: orderer1.orgorderer.com
+    image: hyperledger/fabric-orderer
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer1.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer1.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
+    - /var/hyperledger/production/orderer/orderer1:/var/hyperledger/production
+    ports:
+      - 8050:7050
+    networks:
+      - nice
+
+  orderer2.orgorderer.com:
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    # environment:
+    #   - ORDERER_GENERAL_LISTENPORT=9050
+    container_name: orderer2.orgorderer.com
+    image: hyperledger/fabric-orderer
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer2.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer2.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
+    - /var/hyperledger/production/orderer/orderer2:/var/hyperledger/production
+    ports:
+      - 9050:7050
+    networks:
+      - nice
+
+  orderer3.orgorderer.com:
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    # environment:
+    #   - ORDERER_GENERAL_LISTENPORT=10050
+    container_name: orderer3.orgorderer.com
+    image: hyperledger/fabric-orderer
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer3.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer3.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
+    - /var/hyperledger/production/orderer/orderer3:/var/hyperledger/production
+    ports:
+      - 10050:7050
+    networks:
+      - nice
+
+  orderer4.orgorderer.com:
+    extends:
+      file: peer-base.yaml
+      service: orderer-base
+    # environment:
+    #   - ORDERER_GENERAL_LISTENPORT=10150
+    container_name: orderer4.orgorderer.com
+    image: hyperledger/fabric-orderer
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/etc/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganization/orgorderer/admin/msp:/etc/hyperledger/orderer/admin/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer4.orgorderer.com/msp:/etc/hyperledger/orderer/msp 
+    - ../crypto-config/ordererOrganization/orgorderer/orderers/orderer4.orgorderer.com/tls:/etc/hyperledger/orderer/tls 
+    - /var/hyperledger/production/orderer/orderer4:/var/hyperledger/production
+    ports:
+      - 10150:7050
     networks:
       - nice
 
@@ -288,14 +358,15 @@ services:
       - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/naverOrganization/orgnaver/peers/peer0/tls/ca.crt
       - CORE_PEER_MSPCONFIGPATH=/crypto-config/naverOrganization/orgnaver/admin/msp
     # working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-    working_dir: /channel-artifacts
+    working_dir: /etc/hyperledger/fabric
     command: /bin/bash
     volumes:
         - /var/run/:/host/var/run/
         - ../chaincode/:/src/chaincode
         - ../crypto-config:/crypto-config
         - ../scripts:/scripts
-        - ../channel-artifacts:/channel-artifacts
+        - ../configtx.yaml:/etc/hyperledger/fabric/configtx.yaml
+        - ../channel-artifacts:/etc/hyperledger/fabric/channel-artifacts
     networks:
       - nice 
 
@@ -309,7 +380,7 @@ services:
     volumes:
       - ../scripts:/scripts
       - ../crypto-config:/crypto-config
-      - ../channel-artifacts:/channel-artifacts
+      - ../:/channel-artifacts
     networks:
       - nice
 

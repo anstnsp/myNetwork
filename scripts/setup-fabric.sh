@@ -11,13 +11,14 @@
 #
 
 function main {
+   set -e 
    echo "Beginning registering orderer and peer identities ..."
    registerIdentities
    getCACerts
    enrollPeer
    enrollOrderer
    makeConfigTxYaml
-   generateChannelArtifacts
+   # generateChannelArtifacts
    echo "Finished registers orderer and peer identities"
 }
 
@@ -81,12 +82,12 @@ function registerOrdererIdentities {
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
          initOrdererVars $ORG $((COUNT-1))
          echo "Registering $ORDERER_NAME with $CA_NAME"
-         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS  --id.type orderer --id.affiliation ${ORG}  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
+         fabric-ca-client register -d --id.name $ORDERER_NAME --id.secret $ORDERER_PASS  --id.type orderer   --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default 
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.type admin --id.affiliation ${ORG} --id.attrs  "admin=true:ecert"  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS  --id.type admin  --id.attrs  "admin=true:ecert"  --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
    done
 }
 
@@ -104,16 +105,16 @@ function registerPeerIdentities {
          initPeerVars $ORG $((COUNT-1))
          echo "Registering $PEER_NAME with $CA_NAME"
          #PEER 등록 (Register peer)
-         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer  --id.affiliation ${ORG} --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
+         fabric-ca-client register -d --id.name $PEER_NAME --id.secret $PEER_PASS --id.type peer   --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul 
          COUNT=$((COUNT+1))
       done
       echo "Registering admin identity with $CA_NAME"
       # The admin identity has the "admin" attribute which is added to ECert by default
       #조직의 admin등록 (Register admin)
-      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.type client  --id.affiliation ${ORG} --id.attrs "hf.Registrar.Roles=admin,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+      fabric-ca-client register -d --id.name $ADMIN_NAME --id.secret $ADMIN_PASS --id.type client   --id.attrs "hf.Registrar.Roles=admin,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
       echo "Registering user identity with $CA_NAME"
       #client 등록 (Register client) << dapp에서는 admin이나 client 쓰면됨.  
-      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS --id.type user  --id.affiliation ${ORG} --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
+      fabric-ca-client register -d --id.name $USER_NAME --id.secret $USER_PASS --id.type user   --caname ${CA_NAME} --csr.names C=KR,O=${ORG},ST=Seoul
    done
 }
 
@@ -269,7 +270,7 @@ function printPeerOrg {
     # Policies defines the set of policies at this level of the config tree
     # For organization policies, their canonical path is usually
     #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
-    Policies:
+    Policies: &${ORG}Policies
         Readers:
             Type: Signature
             Rule: \"OR('${ORG}MSP.admin','${ORG}MSP.peer',  '${ORG}MSP.client')\"
@@ -285,7 +286,6 @@ function printPeerOrg {
        # encoded in the genesis block in the Application section context
        - Host: $PEER_HOST"
 echo "         Port: 7051"
-
 
 }
 
@@ -341,9 +341,10 @@ Capabilities:
         # prior releases.
         # Prior to enabling V1.3 channel capabilities, ensure that all
         # orderers and peers on a channel are at v1.3.0 or later.
-        
-        V1_3: true
-        V1_1: true
+        V1_4_3: true
+        V1_3: false
+        V1_1: false
+      
         
     # Orderer capabilities apply only to the orderers, and may be safely
     # used with prior release peers.
@@ -354,7 +355,9 @@ Capabilities:
         # level, but which would be incompatible with orderers from prior releases.
         # Prior to enabling V1.1 orderer capabilities, ensure that all
         # orderers on a channel are at v1.1.0 or later.
-        V1_1: true
+        V1_4_2: true
+        V1_1: false
+     
 
     # Application capabilities apply only to the peer network, and may be safely
     # used with prior release orderers.
@@ -362,7 +365,8 @@ Capabilities:
     Application: &ApplicationCapabilities
         # V1.3 for Application enables the new non-backwards compatible
         # features and fixes of fabric v1.3.
-        V1_3: true
+        V1_4_2: true
+        V1_3: false
         # V1.2 for Application enables the new non-backwards compatible
         # features and fixes of fabric v1.2 (note, this need not be set if
         # later version capabilities are set)
@@ -371,6 +375,7 @@ Capabilities:
         # features and fixes of fabric v1.1 (note, this need not be set if
         # later version capabilities are set).
         V1_1: false
+       
 
 ################################################################################
 #
@@ -381,9 +386,6 @@ Capabilities:
 #
 ################################################################################
 Application: &ApplicationDefaults
-
-    # Organizations is the list of orgs which are defined as participants on
-    # the application side of the network
     Organizations:
 
     # Policies defines the set of policies at this level of the config tree
@@ -413,13 +415,9 @@ Application: &ApplicationDefaults
 #
 ################################################################################
 Orderer: &OrdererDefaults
-
-  # Orderer Type: The orderer implementation to start
-  # Available types are \"solo\" and \"kafka\"
-    # Orderer Type: The orderer implementation to start
-    # Available types are \"solo\" and \"kafka\"
-    OrdererType: solo
-    Addresses:"
+    OrdererType: etcdraft
+    Addresses:     
+    "
 
    for ORG in $ORDERER_ORGS; do
       local COUNT=1
@@ -449,19 +447,38 @@ Orderer: &OrdererDefaults
       # max bytes will result in a batch larger than preferred max bytes.
       PreferredMaxBytes: 512 KB
 
-    Kafka:
-        # Brokers: A list of Kafka brokers to which the orderer connects
-        # NOTE: Use IP:port notation
-        Brokers:
-            - 127.0.0.1:9092
-      
-    # Organizations is the list of orgs which are defined as participants on
-    # the orderer side of the network
-    Organizations:
+    EtcdRaft:
+        Options:
+          TickInterval: 1500ms #두 노드간 호출 간격 
+          ElectionTick: 20    #선거사이에 반드시 통과해야하는 노드 틱 수 ,만약 팔로워가 선거틱이 다 지나가기전에 현재 기간동안 리더로부터 메세지를 받지못하면 팔로워가 후보자가 되고 선거 시작함.
+          HeartbeatTick: 1    
+          MaxInflightBlocks: 5  #낙관적 복제기간동안 블럭을 더하는 최대 수 
+          SnapshotIntervalSize: 20971520  #//스냅샷 바이트 수 
+        Consenters:        "
+      for ORG in $ORDERER_ORGS; do
+      local COUNT=1
+      while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
+         initOrdererVars $ORG $((COUNT-1))
+         echo "            - Host: $ORDERER_HOST"
+         echo "              Port: 7050"
+         echo "              ClientTLSCert: ${TLSDIR}/server.crt"
+         echo "              ServerTLSCert: ${TLSDIR}/server.crt"
+         COUNT=$((COUNT+1))
+      done
+   done
 
-    # Policies defines the set of policies at this level of the config tree
-    # For Orderer policies, their canonical path is
-    #   /Channel/Orderer/<PolicyName>
+   # echo "
+   #          Addresses:"
+   # for ORG in $ORDERER_ORGS; do
+   #   for (( i=0; i<$NUM_ORDERERS; i++ ));do
+   #     initOrdererVars ${ORG} ${i}
+   #     echo "                - ${ORG}${i}.example.com:7050"
+   #   done
+   # done
+ echo "     
+    Organizations:
+      - *orderer
+
     Policies:
         Readers:
             Type: ImplicitMeta
@@ -488,9 +505,6 @@ Orderer: &OrdererDefaults
 #
 ################################################################################
 Channel: &ChannelDefaults
-    # Policies defines the set of policies at this level of the config tree
-    # For Channel policies, their canonical path is
-    #   /Channel/<PolicyName>
     Policies:
         # Who may invoke the 'Deliver' API
         Readers:
@@ -504,10 +518,6 @@ Channel: &ChannelDefaults
         Admins:
             Type: ImplicitMeta
             Rule: \"MAJORITY Admins\"
-
-    # Capabilities describes the channel level capabilities, see the
-    # dedicated Capabilities section elsewhere in this file for a full
-    # description
     Capabilities:
         <<: *ChannelCapabilities
 
@@ -523,16 +533,18 @@ Profiles:
 
     TwoOrgsOrdererGenesis:
         <<: *ChannelDefaults
+        Capabilities:
+            <<: *ChannelCapabilities      
         Orderer:
-            <<: *OrdererDefaults
-            Organizations:"
-            
-   for ORG in $ORDERER_ORGS; do
-      printf "                  - *${ORG}"
-   done
+            <<: *OrdererDefaults "
    echo "
             Capabilities:
                 <<: *OrdererCapabilities
+      #   Application:
+      #       <<: *ApplicationDefaults
+            Organizations:
+            -  *orderer
+
         Consortiums:
             SampleConsortium:
                 Organizations:"
@@ -540,6 +552,33 @@ Profiles:
         initOrgVars $ORG
         echo "                - *${ORG}"
     done
+   # echo "
+   #  SampleMultiNodeEtcdRaft:
+   #      <<: *ChannelDefaults
+   #      Capabilities:
+   #          <<: *ChannelCapabilities    
+   #      Orderer:
+   #          <<: *OrdererDefaults"
+   # echo "
+   #          Organizations:"
+            
+   # for ORG in $ORDERER_ORGS; do
+   #    printf "            - *${ORG}"
+   # done
+   # echo "
+   #          Capabilities:
+   #              <<: *OrdererCapabilities
+   #      Application:
+   #          <<: *ApplicationDefaults
+   #          Organizations:
+   #          - <<: *orderer
+   #      Consortiums:
+   #          SampleConsortium:
+   #              Organizations:"
+   #  for ORG in $PEER_ORGS; do
+   #      initOrgVars $ORG
+   #      echo "                - *${ORG}"
+   #  done
 
    echo "
     TwoOrgsChannel:
@@ -555,8 +594,6 @@ Profiles:
     echo "
             Capabilities:
               <<: *ApplicationCapabilities
-
-
    "
    } > /etc/hyperledger/fabric/configtx.yaml
    # Copy it to the data directory to make debugging easier

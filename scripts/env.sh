@@ -32,19 +32,19 @@ ORGS="$ORDERER_ORGS $PEER_ORGS"
 ADMINCERTS=true
 
 # Number of orderer nodes
-NUM_ORDERERS=1
+NUM_ORDERERS=3
 
 # The remainder of this file contains variables which typically would not be changed.
-GENESIS_BLOCK_FILE=/channel-artifacts/genesis.block
-
+# GENESIS_BLOCK_FILE=/channel-artifacts/genesis.block
+GENESIS_BLOCK_FILE=/etc/hyperledger/fabric/channel-artifacts/genesis.block
 # The path to a channel transaction
-CHANNEL_TX_FILE=/channel-artifacts/channel.tx
-
+# CHANNEL_TX_FILE=/channel-artifacts/channel.tx
+CHANNEL_TX_FILE=/etc/hyperledger/fabric/channel-artifacts/channel.tx
 # Name of test channel
 CHANNEL_NAME=mychannel
 
 # Name of system channel 
-SYSTEM_CHANNEL_NAME=syschannel 
+SYSTEM_CHANNEL_NAME=kms 
 
 #go버전 최신 체인코드 
 CC_SRC_PATH=/src/chaincode/fabcar/javascript
@@ -62,7 +62,6 @@ SLEEP_TIME=0.2
 ORDERER_ENDPOINT=orderer0.orgorderer.com:7050
 # PEER 인증서 공통 경로
 PEER_CERT_FILE_COMMON_DIR=/crypto-config
-
 
 # initOrgVars <ORG>
 function initOrgVars {
@@ -85,7 +84,8 @@ function initOrgVars {
 
    ROOT_CA_CERTFILE=/crypto-config/${ORG}Organization/org${ORG}/ca/rca.org${ORG}.com-cert.pem
    #ANCHOR_TX_FILE=/root/data/${ORG}_anchors.tx
-   ANCHOR_TX_FILE=/channel-artifacts/${ORG}MSP_anchors.tx
+   # ANCHOR_TX_FILE=/channel-artifacts/${ORG}MSP_anchors.tx
+   ANCHOR_TX_FILE=/etc/hyperledger/fabric/channel-artifacts/${ORG}MSP_anchors.tx
    ORG_MSP_ID=${ORG}MSP
    #ORG_MSP_DIR=/root/orgs/${ORG}/msp
    ORG_MSP_DIR=/crypto-config/${ORG}Organization/org${ORG}/msp

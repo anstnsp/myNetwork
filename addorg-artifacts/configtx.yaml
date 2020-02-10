@@ -1,0 +1,30 @@
+
+Organizations:
+  - &lg
+
+      Name: lg
+
+      # ID to load the MSP definition as
+      ID: lgMSP
+
+      # MSPDir is the filesystem path which contains the MSP configuration
+      MSPDir: /crypto-config/lgOrganization/orglg/msp
+      # Policies defines the set of policies at this level of the config tree
+      # For organization policies, their canonical path is usually
+      #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+      Policies:
+          Readers:
+              Type: Signature
+              Rule: "OR('lgMSP.admin','lgMSP.peer',  'lgMSP.client')"
+          Writers:
+              Type: Signature
+              Rule: "OR('lgMSP.admin', 'lgMSP.client')"
+          Admins:
+              Type: Signature
+              Rule: "OR('lgMSP.admin')"
+      AnchorPeers:
+        # AnchorPeers defines the location of peers which can be used
+        # for cross org gossip communication.  Note, this value is only
+        # encoded in the genesis block in the Application section context
+        - Host: peer0.orglg.com
+          Port: 7051

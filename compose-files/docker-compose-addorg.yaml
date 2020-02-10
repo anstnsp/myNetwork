@@ -120,15 +120,15 @@ services:
       - CORE_PEER_TLS_ROOTCERT_FILE=/crypto-config/lgOrganization/orglg/peers/peer0/tls/ca.crt
       - CORE_PEER_MSPCONFIGPATH=/crypto-config/lgOrganization/orglg/admin/msp
     # working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-    working_dir: /channel-artifacts
+    working_dir: /etc/hyperledger/fabric
     command: /bin/bash
     volumes:
         - /var/run/:/host/var/run/
         - ../chaincode/:/src/chaincode
         - ../crypto-config:/crypto-config
         - ../scripts:/scripts
-        - ../channel-artifacts:/channel-artifacts
-        - ../addorg-artifacts:/addorg-artifacts
+        - ../configtx.yaml:/etc/hyperledger/fabric/configtx.yaml
+        - ../channel-artifacts:/etc/hyperledger/fabric/channel-artifacts
     networks:
       - nice 
 

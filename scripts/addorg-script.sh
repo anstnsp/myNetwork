@@ -48,7 +48,7 @@ function joinChannelCommand() {
 
   echo "=================== peer${PEER}.org${ORG} joinning start to '$CHANNEL_NAME' ==================="
   set -x
-  peer channel join -b $CHANNEL_NAME.block 
+  peer channel join -b channel-artifacts/$CHANNEL_NAME.block 
   res=$?
   set +x
   verifyResult $res "peer${PEER}.org${ORG}.com channel join failed"

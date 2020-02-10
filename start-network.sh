@@ -82,8 +82,10 @@ function generateCertsAndChannelArtifacts() {
   done 
   
   sleep 2s
-  docker-compose up  -d setup 
+  docker-compose up  -d setup
   echo " " 
+  
+
   # $$는 현재 스크립트의 PID를 나타냄 
   # $!는 최근에 실행한 백그라운드(비동기) 명령의 PID
   # wait PID 하면 해당 PID가 끝날때까지 기다림. 
@@ -95,6 +97,8 @@ function generateCertsAndChannelArtifacts() {
     echo "Failed to generate certificates and channel-artifacts..."
     exit 1
   fi
+  docker-compose up  -d cli
+  docker exec cli /scripts/script.sh "generate-channel-artifacts"
   echo
 
   cd ../
@@ -121,7 +125,7 @@ function networkUp() {
       docker-compose up -d orderer${i}.org${ORG}.com 
     done
   done
-  docker-compose up -d cli 
+
   cd ../
 }
 
@@ -148,6 +152,7 @@ function removeVolume() {
     sudo rm -r channel-artifacts
   fi 
   docker rm -f $(docker ps -aq)
+  rm -rf configtx.yaml
   docker network prune 
   docker system prune 
   docker volume prune 
@@ -164,10 +169,10 @@ function waitGen() {
   set +e 
   set +x 
   cd ..
-  local FILENAME=channel-artifacts/configtx.yaml 
+  local FILENAME=./configtx.yaml 
   # local FILENAME=configtx.yaml 
   while true; do 
-    echo "Waiting for generaing channel-artifacts ..." 
+    echo "Waiting for generaing configtx.yaml ..." 
     if [ -f ${FILENAME} ]; then
       break
     fi 
