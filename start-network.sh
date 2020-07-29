@@ -152,6 +152,7 @@ function removeVolume() {
     sudo rm -r channel-artifacts
   fi 
   docker rm -f $(docker ps -aq)
+  docker rmi $(docker images dev-* -q)
   rm -rf configtx.yaml
   docker network prune 
   docker system prune 

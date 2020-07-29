@@ -102,9 +102,32 @@ class FabCar extends Contract {
         };
 
         await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
+        ctx.stub.setEvent("create", owner.toString()); 
+        console.info(`owner:${owner}`)
         console.info('============= END : Create Car ===========');
     }
 
+    async createCarObj(ctx, param) {
+        console.info('============= START : Create Car Obj ===========');
+        
+        console.log(`param : ${param}`); // {"carNumber":"CAR777","color":"red","make":"문수","model":"제네시스","owner":"문수네"}
+
+        console.log(`JSON.stringify(param) : ${JSON.stringify(param)}`);
+        console.log(`param.carNumber: ${param.carNumber}`)
+
+        const obj = JSON.parse(param); 
+        console.log(`obj : ${obj}`)
+        console.log(`obj.carNumber: ${obj.carNumber}`)
+        // const car = JSON.parse(param); 
+        // console.log(`carNumber : ${car.carNumber}`)
+        //데이터값은 { } 오브젝트를 stringify 해서 버퍼로 바꿔서넣음. 
+        await ctx.stub.putState(obj.carNumber, Buffer.from(JSON.stringify(obj)));
+
+        ctx.stub.setEvent("createObj", param.toString());
+
+        console.info('============= END : Create Car Obj ===========');
+    }
+    
     async queryAllCars(ctx) {
         const startKey = 'CAR0';
         const endKey = 'CAR999';
@@ -148,7 +171,45 @@ class FabCar extends Contract {
         car.owner = newOwner;
 
         await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
+        
         console.info('============= END : changeCarOwner ===========');
+    }
+    async createPrivData(ctx) {
+        console.info('============= START : createPrivData ===========');
+        const transMap = await ctx.stub.getTransient(); 
+        console.info(`transMap : ${transMap}`);
+        console.log(`transMap["car"]: ${transMap.get("car")}`)  //transMap["car"]: ByteBufferNB(offset=1215,markedOffset=-1,limit=1249,capacity=1249)
+        console.log(`transMap.get("car").toString("utf8"): ${transMap.get("car").toString("utf8")}`)  //transMap.get("car").toString("utf8"): {"carNumber":"CAR111","price":444}
+
+        const transientData = transMap.get("car").toString("utf8"); 
+        const jsonData = JSON.parse(transientData); 
+
+        console.log(`jsonData.carNumber: ${jsonData.carNumber}`);
+        console.log(`jsonData.price: ${jsonData.price}`);
+
+
+        // putPrivateData 인터페이스:    await ctx.stub.putPrivateData(collection, key, value));
+        await ctx.stub.putPrivateData("collectionFabcar", jsonData.carNumber, Buffer.from(JSON.stringify(jsonData) ) );
+   
+        ctx.stub.setEvent("private", jsonData.toString()); 
+        
+        console.info('============= END : createPrivData ===========');
+    }
+
+    async queryPrivData(ctx, carNumber) {
+        console.info('============= START : queryPrivData ===========');
+        const privDataAsBytes = await ctx.stub.getPrivateData("collectionFabcar", carNumber); 
+
+        if (!privDataAsBytes || privDataAsBytes.length === 0) {
+            throw new Error(`${carNumber} does not exist`);
+        }
+        // const carAsBytes = await ctx.stub.getState(carNumber); // get the car from chaincode state
+        // if (!carAsBytes || carAsBytes.length === 0) {
+        //     throw new Error(`${carNumber} does not exist`);
+        // }
+        console.log(privDataAsBytes.toString());
+        return privDataAsBytes.toString();
+        console.info('============= END : queryPrivData ===========');
     }
 
 }

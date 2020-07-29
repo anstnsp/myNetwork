@@ -1,0 +1,332 @@
+
+################################################################################
+#
+#   Section: Organizations
+#
+#   - This section defines the different organizational identities which will
+#   be referenced later in the configuration.
+#
+################################################################################
+Organizations:
+
+  - &orderer
+
+    Name: orderer
+
+    # ID to load the MSP definition as
+    ID: ordererMSP
+
+    # MSPDir is the filesystem path which contains the MSP configuration
+    MSPDir: /crypto-config/ordererOrganization/orgorderer/msp
+
+    # Policies defines the set of policies at this level of the config tree
+    # For organization policies, their canonical path is usually
+    #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+    Policies:
+        Readers:
+            Type: Signature
+            Rule: "OR('ordererMSP.member')"
+        Writers:
+            Type: Signature
+            Rule: "OR('ordererMSP.member')"
+        Admins:
+            Type: Signature
+            Rule: "OR('ordererMSP.admin')"   
+
+  - &naver
+
+    Name: naver
+
+    # ID to load the MSP definition as
+    ID: naverMSP
+
+    # MSPDir is the filesystem path which contains the MSP configuration
+    MSPDir: /crypto-config/naverOrganization/orgnaver/msp
+
+    # Policies defines the set of policies at this level of the config tree
+    # For organization policies, their canonical path is usually
+    #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+    Policies: &naverPolicies
+        Readers:
+            Type: Signature
+            Rule: "OR('naverMSP.admin','naverMSP.peer',  'naverMSP.client')"
+        Writers:
+            Type: Signature
+            Rule: "OR('naverMSP.admin', 'naverMSP.client')"
+        Admins:
+            Type: Signature
+            Rule: "OR('naverMSP.admin')"
+    AnchorPeers:
+       # AnchorPeers defines the location of peers which can be used
+       # for cross org gossip communication.  Note, this value is only
+       # encoded in the genesis block in the Application section context
+       - Host: peer0.orgnaver.com
+         Port: 7051
+
+  - &kakao
+
+    Name: kakao
+
+    # ID to load the MSP definition as
+    ID: kakaoMSP
+
+    # MSPDir is the filesystem path which contains the MSP configuration
+    MSPDir: /crypto-config/kakaoOrganization/orgkakao/msp
+
+    # Policies defines the set of policies at this level of the config tree
+    # For organization policies, their canonical path is usually
+    #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
+    Policies: &kakaoPolicies
+        Readers:
+            Type: Signature
+            Rule: "OR('kakaoMSP.admin','kakaoMSP.peer',  'kakaoMSP.client')"
+        Writers:
+            Type: Signature
+            Rule: "OR('kakaoMSP.admin', 'kakaoMSP.client')"
+        Admins:
+            Type: Signature
+            Rule: "OR('kakaoMSP.admin')"
+    AnchorPeers:
+       # AnchorPeers defines the location of peers which can be used
+       # for cross org gossip communication.  Note, this value is only
+       # encoded in the genesis block in the Application section context
+       - Host: peer0.orgkakao.com
+         Port: 7051
+
+################################################################################
+#
+#   SECTION: Capabilities
+#
+#   - This section defines the capabilities of fabric network. This is a new
+#   concept as of v1.1.0 and should not be utilized in mixed networks with
+#   v1.0.x peers and orderers.  Capabilities define features which must be
+#   present in a fabric binary for that binary to safely participate in the
+#   fabric network.  For instance, if a new MSP type is added, newer binaries
+#   might recognize and validate the signatures from this type, while older
+#   binaries without this support would be unable to validate those
+#   transactions.  This could lead to different versions of the fabric binaries
+#   having different world states.  Instead, defining a capability for a channel
+#   informs those binaries without this capability that they must cease
+#   processing transactions until they have been upgraded.  For v1.0.x if any
+#   capabilities are defined (including a map with all capabilities turned off)
+#   then the v1.0.x peer will deliberately crash.
+#
+################################################################################
+Capabilities:
+    # Channel capabilities apply to both the orderers and the peers and must be
+    # supported by both.
+    # Set the value of the capability to true to require it.
+    Channel: &ChannelCapabilities
+        # V1.3 for Channel is a catchall flag for behavior which has been
+        # determined to be desired for all orderers and peers running at the v1.3.x
+        # level, but which would be incompatible with orderers and peers from
+        # prior releases.
+        # Prior to enabling V1.3 channel capabilities, ensure that all
+        # orderers and peers on a channel are at v1.3.0 or later.
+        V1_4_3: true
+        V1_3: false
+        V1_1: false
+      
+        
+    # Orderer capabilities apply only to the orderers, and may be safely
+    # used with prior release peers.
+    # Set the value of the capability to true to require it.
+    Orderer: &OrdererCapabilities
+        # V1.1 for Orderer is a catchall flag for behavior which has been
+        # determined to be desired for all orderers running at the v1.1.x
+        # level, but which would be incompatible with orderers from prior releases.
+        # Prior to enabling V1.1 orderer capabilities, ensure that all
+        # orderers on a channel are at v1.1.0 or later.
+        V1_4_2: true
+        V1_1: false
+     
+
+    # Application capabilities apply only to the peer network, and may be safely
+    # used with prior release orderers.
+    # Set the value of the capability to true to require it.
+    Application: &ApplicationCapabilities
+        # V1.3 for Application enables the new non-backwards compatible
+        # features and fixes of fabric v1.3.
+        V1_4_2: true
+        V1_3: false
+        # V1.2 for Application enables the new non-backwards compatible
+        # features and fixes of fabric v1.2 (note, this need not be set if
+        # later version capabilities are set)
+        V1_2: false
+        # V1.1 for Application enables the new non-backwards compatible
+        # features and fixes of fabric v1.1 (note, this need not be set if
+        # later version capabilities are set).
+        V1_1: false
+       
+
+################################################################################
+#
+#   SECTION: Application
+#
+#   This section defines the values to encode into a config transaction or
+#   genesis block for application related parameters
+#
+################################################################################
+Application: &ApplicationDefaults
+    Organizations:
+
+    # Policies defines the set of policies at this level of the config tree
+    # For Application policies, their canonical path is
+    #   /Channel/Application/<PolicyName>
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "ANY Admins"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+
+################################################################################
+#
+#   SECTION: Orderer
+#
+#   - This section defines the values to encode into a config transaction or
+#   genesis block for orderer related parameters
+#
+################################################################################
+Orderer: &OrdererDefaults
+    OrdererType: etcdraft
+    Addresses:     
+    
+        - orderer0.orgorderer.com:7050
+        - orderer1.orgorderer.com:7050
+        - orderer2.orgorderer.com:7050
+
+    # Batch Timeout: The amount of time to wait before creating a batch
+    BatchTimeout: 1s
+
+    # Batch Size: Controls the number of messages batched into a block
+    BatchSize:
+
+      # Max Message Count: The maximum number of messages to permit in a batch
+      MaxMessageCount: 10
+
+      # Absolute Max Bytes: The absolute maximum number of bytes allowed for
+      # the serialized messages in a batch.
+      AbsoluteMaxBytes: 99 MB
+
+      # Preferred Max Bytes: The preferred maximum number of bytes allowed for
+      # the serialized messages in a batch. A message larger than the preferred
+      # max bytes will result in a batch larger than preferred max bytes.
+      PreferredMaxBytes: 512 KB
+
+    EtcdRaft:
+        Options:
+          TickInterval: 1500ms #두 노드간 호출 간격 
+          ElectionTick: 20    #선거사이에 반드시 통과해야하는 노드 틱 수 ,만약 팔로워가 선거틱이 다 지나가기전에 현재 기간동안 리더로부터 메세지를 받지못하면 팔로워가 후보자가 되고 선거 시작함.
+          HeartbeatTick: 1    
+          MaxInflightBlocks: 5  #낙관적 복제기간동안 블럭을 더하는 최대 수 
+          SnapshotIntervalSize: 20971520  #//스냅샷 바이트 수 
+        Consenters:        
+            - Host: orderer0.orgorderer.com
+              Port: 7050
+              ClientTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/tls/server.crt
+              ServerTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/tls/server.crt
+            - Host: orderer1.orgorderer.com
+              Port: 7050
+              ClientTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer1.orgorderer.com/tls/server.crt
+              ServerTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer1.orgorderer.com/tls/server.crt
+            - Host: orderer2.orgorderer.com
+              Port: 7050
+              ClientTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer2.orgorderer.com/tls/server.crt
+              ServerTLSCert: /crypto-config/ordererOrganization/orgorderer/orderers/orderer2.orgorderer.com/tls/server.crt
+     
+    Organizations:
+      - *orderer
+
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        # BlockValidation specifies what signatures must be included in the block
+        # from the orderer for the peer to validate it.
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+
+################################################################################
+#
+#   CHANNEL
+#
+#   This section defines the values to encode into a config transaction or
+#   genesis block for channel related parameters.
+#
+################################################################################
+Channel: &ChannelDefaults
+    Policies:
+        # Who may invoke the 'Deliver' API
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        # Who may invoke the 'Broadcast' API
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        # By default, who may modify elements at this config level
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+################################################################################
+#
+#   Profile
+#
+#   - Different configuration profiles may be encoded here to be specified
+#   as parameters to the configtxgen tool
+#
+################################################################################
+Profiles:
+
+    TwoOrgsOrdererGenesis:
+        <<: *ChannelDefaults
+        Capabilities:
+            <<: *ChannelCapabilities      
+        Orderer:
+            <<: *OrdererDefaults 
+
+            Capabilities:
+                <<: *OrdererCapabilities
+      #   Application:
+      #       <<: *ApplicationDefaults
+            Organizations:
+            -  *orderer
+
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                - *naver
+                - *kakao
+
+    TwoOrgsChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *naver
+                - *kakao
+
+            Capabilities:
+              <<: *ApplicationCapabilities
+   

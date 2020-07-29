@@ -1,0 +1,10 @@
+[
+ {
+   "name": "collectionMarbles",
+   "policy": "OR('kakaoMSP.member', 'naverMSP.member')",
+   "requiredPeerCount": 0,
+   "maxPeerCount": 2,
+   "blockToLive":1000000,
+   "memberOnlyRead": true
+}
+

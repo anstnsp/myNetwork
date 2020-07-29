@@ -1,0 +1,17 @@
+
+NodeOUs:
+   Enable: true
+   ClientOUIdentifier:
+      Certificate: cacerts/rca-orgkakao-com-7054.pem
+      OrganizationalUnitIdentifier: client
+   AdminOUIdentifier:
+      Certificate: cacerts/rca-orgkakao-com-7054.pem
+      OrganizationalUnitIdentifier: admin
+   PeerOUIdentifier:
+      Certificate: cacerts/rca-orgkakao-com-7054.pem
+      OrganizationalUnitIdentifier: peer
+   OrdererOUIdentifier:
+      Certificate: cacerts/rca-orgkakao-com-7054.pem
+      OrganizationalUnitIdentifier: orderer
+      
+   

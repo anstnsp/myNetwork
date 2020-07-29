@@ -48,14 +48,16 @@ SYSTEM_CHANNEL_NAME=kms
 
 #go버전 최신 체인코드 
 CC_SRC_PATH=/src/chaincode/fabcar/javascript
+# CC_SRC_PATH=chaincode/marbles02_private/go/
 # 체인코드 언어(GO)
-CC_LANGUAGE=node 
+CC_LANGUAGE=node
+# CC_LANGUAGE=golang
 # Orderer tls 인증서 경로
 ORDERER_CA=/crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgorderer.com/msp/tlscacerts/rca-orgorderer-com-7054.pem
 
 CC_NAME=hcc-cc-many
 # 체인코드버젼
-CC_VERSION=16.0
+CC_VERSION=13.0
 # sleep 함수 시간 설정
 SLEEP_TIME=0.2
 # ORDERER 엔드포인트

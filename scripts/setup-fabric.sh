@@ -18,7 +18,7 @@ function main {
    enrollPeer
    enrollOrderer
    makeConfigTxYaml
-   # generateChannelArtifacts
+   generateChannelArtifacts
    echo "Finished registers orderer and peer identities"
 }
 
@@ -33,7 +33,9 @@ function enrollCAAdmin {
    export FABRIC_CA_CLIENT_HOME=$HOME/cas/$CA_NAME  #/etc/hyperledger/fabric-ca/crypto/cas/rca-orderer , /etc/hyperledger/fabric-ca/crypto/cas/rca-naver , /root/cas/rca-orderer
    export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE # /crypto-config/rca-certs/rca.org${ORG}.com-cert.pem
    # fabric-ca-client affiliation add ${ORG}
-   fabric-ca-client enroll -d  -u https://$CA_ADMIN_USER_PASS@$CA_HOST_PORT 
+   fabric-ca-client enroll -d  -u https://$CA_ADMIN_USER_PASS@$CA_HOST_PORT
+   echo "enrollCAAdmin end@@@@@@@@@@"
+    
 }
 
 function registerIdentities {
@@ -76,7 +78,7 @@ function registerOrdererIdentities {
    for ORG in $ORDERER_ORGS; do
       initOrgVars $ORG
       enrollCAAdmin
-      fabric-ca-client affiliation add ${ORG}
+     fabric-ca-client affiliation add ${ORG}
       fabric-ca-client affiliation list 
       local COUNT=1
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do

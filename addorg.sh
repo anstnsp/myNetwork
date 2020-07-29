@@ -24,8 +24,8 @@ function startRootCA() {
   cd compose-files 
   docker-compose -f docker-compose-addorg.yaml up -d rca.orglg.com 
   cd ..
-}
-
+} 
+ 
 #CA로부터 인증서 발급 
 function getCertificate() {
 
