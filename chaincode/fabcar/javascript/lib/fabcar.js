@@ -123,7 +123,7 @@ class FabCar extends Contract {
         //데이터값은 { } 오브젝트를 stringify 해서 버퍼로 바꿔서넣음. 
         await ctx.stub.putState(obj.carNumber, Buffer.from(JSON.stringify(obj)));
 
-        ctx.stub.setEvent("createObj", param.toString());
+        ctx.stub.setEvent("createObj", Buffer.from(JSON.stringify(obj)));
 
         console.info('============= END : Create Car Obj ===========');
     }
@@ -191,7 +191,7 @@ class FabCar extends Contract {
         // putPrivateData 인터페이스:    await ctx.stub.putPrivateData(collection, key, value));
         await ctx.stub.putPrivateData("collectionFabcar", jsonData.carNumber, Buffer.from(JSON.stringify(jsonData) ) );
    
-        ctx.stub.setEvent("private", jsonData.toString()); 
+        ctx.stub.setEvent("private", Buffer.from(JSON.stringify(jsonData))); 
         
         console.info('============= END : createPrivData ===========');
     }
