@@ -57,7 +57,7 @@ ORDERER_CA=/crypto-config/ordererOrganization/orgorderer/orderers/orderer0.orgor
 
 CC_NAME=hcc-cc-many
 # 체인코드버젼
-CC_VERSION=13.0
+CC_VERSION=35.0
 # sleep 함수 시간 설정
 SLEEP_TIME=0.2
 # ORDERER 엔드포인트

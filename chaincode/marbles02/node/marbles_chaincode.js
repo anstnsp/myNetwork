@@ -193,6 +193,9 @@ let Chaincode = class {
     console.info('- start transferMarble ', marbleName, newOwner);
 
     let marbleAsBytes = await stub.getState(marbleName);
+    //1. 소정이 
+    //2. 문수 가 차삼  . 소정 -> 문수 
+    //3. 철수가 삼. 소정 -> 철수 
     if (!marbleAsBytes || !marbleAsBytes.toString()) {
       throw new Error('marble does not exist');
     }

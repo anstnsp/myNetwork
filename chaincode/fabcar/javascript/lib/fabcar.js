@@ -127,7 +127,27 @@ class FabCar extends Contract {
 
         console.info('============= END : Create Car Obj ===========');
     }
-    
+
+    async insertList(ctx, param) {
+        console.info('============= START : insertList ===========');
+        console.log(`param: ${param}`)
+        const carList = JSON.parse(param); 
+
+        const carList2 = carList.list; 
+        console.log(`carList: ${carList2}`); 
+
+        for(let i=0; i<carList2.length; i++) {
+            
+            await ctx.stub.putState(carList2[i].carNumber, Buffer.from(JSON.stringify(carList2[i])));
+            console.info(`Added <--> `, carList2[i]);
+            
+        }
+
+        
+        ctx.stub.setEvent("list", Buffer.from(JSON.stringify(carList))); 
+        console.info('============= END : insertList ===========');
+    }
+
     async queryAllCars(ctx) {
         const startKey = 'CAR0';
         const endKey = 'CAR999';
@@ -171,7 +191,7 @@ class FabCar extends Contract {
         car.owner = newOwner;
 
         await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
-        
+        ctx.stub.setEvent("change", Buffer.from(JSON.stringify(car))); 
         console.info('============= END : changeCarOwner ===========');
     }
     async createPrivData(ctx) {
@@ -211,6 +231,7 @@ class FabCar extends Contract {
         return privDataAsBytes.toString();
         console.info('============= END : queryPrivData ===========');
     }
+
 
 }
 
